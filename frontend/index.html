@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MUSIA — Quantum Studio | Multilingual Story Illustration</title>
+  <meta name="description" content="MUSIA transforms written narratives into cinematic visuals through Quantum-Enhanced Neural Diffusion and Director's Storyboard." />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+            display: ['Cinzel', 'serif'],
+          },
+          colors: {
+            cosmos: {
+              950: '#030712',
+              900: '#070b19',
+              850: '#0a0f24',
+              800: '#0f1736',
+              700: '#17224d',
+            },
+            quantum: {
+              cyan: '#00f2fe',
+              teal: '#09d3ac',
+              violet: '#7928ca',
+              electric: '#4f46e5',
+              indigo: '#6366f1',
+              fuchsia: '#d946ef',
+            }
+          },
+          animation: {
+            'glow-pulse': 'glowPulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'float-slow': 'floating 6s ease-in-out infinite',
+            'quantum-spin': 'spin 12s linear infinite',
+            'shimmer-beam': 'shimmer 2.5s infinite linear',
+          },
+          keyframes: {
+            glowPulse: {
+              '0%, 100%': { opacity: '0.4', transform: 'scale(1)' },
+              '50%': { opacity: '0.8', transform: 'scale(1.05)' },
+            },
+            floating: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-10px)' },
+            },
+            shimmer: {
+              '0%': { transform: 'translateX(-100%)' },
+              '100%': { transform: 'translateX(200%)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts: Plus Jakarta Sans, JetBrains Mono, Cinzel -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Core CSS Variables & Reset ── */
+    :root {
+      --bg-dark: #040714;
+      --card-glass: rgba(10, 15, 36, 0.65);
+      --card-border: rgba(99, 102, 241, 0.18);
+      --card-border-hover: rgba(0, 242, 254, 0.45);
+      --neon-cyan: #00f2fe;
+      --neon-violet: #7928ca;
+      --neon-teal: #09d3ac;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      background-color: var(--bg-dark);
+      color: #e2e8f0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      selection-background-color: rgba(99, 102, 241, 0.3);
+    }
+
+    /* ── Quantum Interactive Background Canvas ── */
+    #quantum-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── Ambient Glow Elements ── */
+    .ambient-glow {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(140px);
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.4;
+    }
+    .glow-cyan { width: 500px; height: 500px; background: radial-gradient(circle, rgba(0,242,254,0.18) 0%, transparent 70%); top: -100px; left: -100px; }
+    .glow-violet { width: 600px; height: 600px; background: radial-gradient(circle, rgba(121,40,202,0.2) 0%, transparent 70%); bottom: -150px; right: -100px; }
+    .glow-indigo { width: 450px; height: 450px; background: radial-gradient(circle, rgba(79,70,229,0.15) 0%, transparent 70%); top: 35%; left: 45%; }
+
+    /* ── Glassmorphism Panels ── */
+    .glass-studio {
+      background: var(--card-glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      box-shadow: 0 10px 35px -5px rgba(0, 0, 0, 0.65), 0 0 1px 1px rgba(255, 255, 255, 0.05) inset;
+      transition: border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s ease;
+    }
+    .glass-studio:hover {
+      border-color: rgba(99, 102, 241, 0.35);
+      box-shadow: 0 14px 45px -5px rgba(0, 0, 0, 0.75), 0 0 25px rgba(99, 102, 241, 0.12);
+    }
+
+    /* ── Studio Buttons ── */
+    .btn-quantum-primary {
+      background: linear-gradient(135deg, #4f46e5 0%, #7928ca 50%, #00f2fe 150%);
+      background-size: 200% 200%;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 0 20px rgba(79, 70, 229, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+      transition: all 0.35s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-quantum-primary:hover:not(:disabled) {
+      background-position: 100% 50%;
+      box-shadow: 0 0 30px rgba(0, 242, 254, 0.55), 0 4px 18px rgba(121, 40, 202, 0.5);
+      transform: translateY(-2px);
+    }
+    .btn-quantum-primary:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    .btn-quantum-primary:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      filter: grayscale(0.5);
+    }
+
+    .btn-quantum-action {
+      background: linear-gradient(135deg, #09d3ac 0%, #00b4d8 100%);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 0 22px rgba(9, 211, 172, 0.35);
+      transition: all 0.3s ease;
+    }
+    .btn-quantum-action:hover:not(:disabled) {
+      box-shadow: 0 0 32px rgba(0, 242, 254, 0.6);
+      transform: translateY(-2px);
+    }
+    .btn-quantum-action:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .btn-quantum-danger {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(185, 28, 28, 0.4) 100%);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #fca5a5;
+      transition: all 0.25s ease;
+    }
+    .btn-quantum-danger:hover:not(:disabled) {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.4) 0%, rgba(185, 28, 28, 0.6) 100%);
+      border-color: rgba(239, 68, 68, 0.7);
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.35);
+      transform: translateY(-1px);
+    }
+    .btn-quantum-danger:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .btn-subtle {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: all 0.2s ease;
+    }
+    .btn-subtle:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(0, 242, 254, 0.4);
+      color: #00f2fe;
+    }
+
+    /* ── Quantum Input Fields ── */
+    #story-input {
+      background: rgba(4, 7, 20, 0.7);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      color: #f1f5f9;
+      resize: none;
+      transition: all 0.3s ease;
+    }
+    #story-input:focus {
+      outline: none;
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 25px rgba(0, 242, 254, 0.25), inset 0 0 10px rgba(0, 242, 254, 0.05);
+    }
+
+    /* ── Progress Indicators ── */
+    .quantum-progress-track {
+      background: rgba(15, 23, 54, 0.8);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+    #progress-bar-fill {
+      background: linear-gradient(90deg, #4f46e5, #7928ca, #00f2fe, #09d3ac);
+      background-size: 300% 100%;
+      box-shadow: 0 0 20px rgba(0, 242, 254, 0.6);
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* ── Director's Scene Card ── */
+    .storyboard-scene {
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      background: linear-gradient(135deg, rgba(15, 23, 54, 0.4) 0%, rgba(10, 15, 36, 0.6) 100%);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .storyboard-scene:hover {
+      border-color: rgba(0, 242, 254, 0.4);
+      background: linear-gradient(135deg, rgba(23, 34, 77, 0.5) 0%, rgba(15, 23, 54, 0.7) 100%);
+      transform: translateX(4px);
+      box-shadow: 0 4px 20px -2px rgba(0, 242, 254, 0.15);
+    }
+
+    /* ── Gallery Card (Cinematic Studio Frame) ── */
+    .cinematic-card {
+      background: rgba(8, 12, 28, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 1rem;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+    .cinematic-card:hover {
+      transform: translateY(-6px) scale(1.015);
+      border-color: rgba(0, 242, 254, 0.5);
+      box-shadow: 0 16px 40px -10px rgba(0, 242, 254, 0.25), 0 0 20px rgba(121, 40, 202, 0.2);
+    }
+    .cinematic-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 1rem;
+      padding: 1px;
+      background: linear-gradient(135deg, transparent, rgba(0, 242, 254, 0.3), transparent);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.35s;
+    }
+    .cinematic-card:hover::before { opacity: 1; }
+
+    /* ── Spinners & Orbs ── */
+    .quantum-loader {
+      position: relative;
+      width: 32px;
+      height: 32px;
+    }
+    .quantum-loader-ring {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      border-top-color: #00f2fe;
+      animation: spin 1s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+    }
+    .quantum-loader-ring:nth-child(2) {
+      border-top-color: #7928ca;
+      animation-delay: -0.3s;
+      width: 80%;
+      height: 80%;
+      top: 10%;
+      left: 10%;
+    }
+    .quantum-loader-ring:nth-child(3) {
+      border-top-color: #09d3ac;
+      animation-delay: -0.6s;
+      width: 60%;
+      height: 60%;
+      top: 20%;
+      left: 20%;
+    }
+
+    /* ── Scrollbars ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(5, 8, 20, 0.4); }
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #4f46e5, #00f2fe);
+      border-radius: 99px;
+    }
+
+    /* ── Light Beam Accent ── */
+    .top-light-beam {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0, 242, 254, 0.7), rgba(121, 40, 202, 0.7), transparent);
+    }
+  </style>
+</head>
+
+<body class="relative">
+  <!-- Interactive Quantum Canvas Particle Grid -->
+  <canvas id="quantum-canvas"></canvas>
+
+  <!-- Ambient Light Orbs -->
+  <div class="ambient-glow glow-cyan"></div>
+  <div class="ambient-glow glow-violet"></div>
+  <div class="ambient-glow glow-indigo"></div>
+
+  <!-- ════════════════════════════════════════════
+       TOP NAVIGATION BAR
+  ════════════════════════════════════════════ -->
+  <header class="relative z-20 border-b border-indigo-500/15 glass-studio sticky top-0 px-6 py-3.5 backdrop-blur-xl">
+    <div class="top-light-beam"></div>
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      
+      <!-- Brand & Studio Title -->
+      <div class="flex items-center gap-4">
+        <div class="relative w-10 h-10 flex items-center justify-center">
+          <div class="absolute inset-0 rounded-xl bg-gradient-to-br from-indigo-600 via-purple-600 to-cyan-400 opacity-90 shadow-[0_0_20px_rgba(79,70,229,0.6)]"></div>
+          <div class="absolute inset-0.5 rounded-[10px] bg-cosmos-950 flex items-center justify-center">
+            <!-- Quantum Orbit Icon -->
+            <svg class="w-5 h-5 text-cyan-400 animate-spin-slow" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="3"/>
+              <ellipse cx="12" cy="12" rx="8" ry="3" transform="rotate(30 12 12)"/>
+              <ellipse cx="12" cy="12" rx="8" ry="3" transform="rotate(-30 12 12)"/>
+            </svg>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xl font-extrabold tracking-wider bg-gradient-to-r from-cyan-400 via-indigo-300 to-fuchsia-400 bg-clip-text text-transparent">MUSIA</span>
+            <span class="px-2 py-0.5 text-[10px] font-bold font-mono tracking-widest uppercase bg-indigo-500/20 text-cyan-300 border border-cyan-500/30 rounded-full">QUANTUM STUDIO v2.5</span>
+          </div>
+          <p class="text-xs text-slate-400 font-medium">Multilingual Narrative Neural Diffusion Engine</p>
+        </div>
+      </div>
+
+      <!-- Live Pipeline & Status Controls -->
+      <div class="flex items-center gap-4">
+        <div id="global-status-pill" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold tracking-wide border border-slate-700/60 bg-slate-900/60 text-slate-400">
+          <span class="w-2 h-2 rounded-full bg-slate-500 shadow-sm inline-block"></span>
+          <span>Engine Idle</span>
+        </div>
+        <a href="/docs" target="_blank"
+           class="btn-subtle text-xs px-3.5 py-1.5 rounded-lg text-slate-300 font-medium hidden sm:flex items-center gap-1.5">
+          <span>API Specs</span>
+          <svg class="w-3 h-3 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 19.5 15-15m0 0H8.25m11.25 0v11.25"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ════════════════════════════════════════════
+       HERO / DIRECTOR'S HEADER STRIP
+  ════════════════════════════════════════════ -->
+  <div class="relative z-10 text-center pt-8 pb-4 px-4">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono font-medium text-cyan-300 bg-cyan-950/40 border border-cyan-500/30 mb-3 backdrop-blur-sm">
+      <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+      Google Colab GPU Tunnel Connected • QuantumFeatureEnhancer Ready
+    </div>
+    <h1 class="text-3xl sm:text-5xl font-black tracking-tight mb-2">
+      <span class="bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">Direct Your Story with </span>
+      <span class="bg-gradient-to-r from-cyan-400 via-indigo-400 to-fuchsia-400 bg-clip-text text-transparent drop-shadow-[0_0_35px_rgba(0,242,254,0.3)]">Quantum Precision</span>
+    </h1>
+    <p class="text-slate-400 text-sm max-w-2xl mx-auto leading-relaxed">
+      Deconstruct multi-scene prose into cinematic prompts. Render each storyboard frame sequentially with Quantum-state prompt modulation.
+    </p>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       MAIN INTERACTIVE STUDIO BOARD
+  ════════════════════════════════════════════ -->
+  <main class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pb-20 grid grid-cols-1 lg:grid-cols-12 gap-6 mt-4">
+
+    <!-- ╔══════════════════════════════════════
+         LEFT PANEL — Script & Director's Board (5 cols)
+    ══════════════════════════════════════╗ -->
+    <section class="lg:col-span-5 flex flex-col gap-5">
+
+      <!-- Story Script Input Card -->
+      <div class="glass-studio rounded-2xl p-5 relative overflow-hidden group">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <span class="p-1.5 rounded-lg bg-indigo-500/10 text-cyan-400 border border-indigo-500/20">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/>
+              </svg>
+            </span>
+            <h2 class="font-bold text-xs uppercase tracking-widest text-slate-300">Prose Script Input</h2>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btn-load-sample" onclick="loadSampleStory()"
+                    class="btn-subtle text-xs px-2.5 py-1 rounded-md text-cyan-400 hover:text-cyan-300 font-medium">
+              Load Sample
+            </button>
+            <button id="btn-clear" onclick="clearStory()"
+                    class="btn-subtle text-xs px-2.5 py-1 rounded-md text-slate-400 hover:text-red-400 font-medium">
+              Clear
+            </button>
+          </div>
+        </div>
+
+        <textarea id="story-input" rows="8"
+                  class="w-full rounded-xl p-4 text-sm font-normal leading-relaxed placeholder-slate-600 focus:ring-0"
+                  placeholder="Paste or write your story here… The parser intelligently detects narrative scene shifts and formats cinematic visual prompts.&#10;&#10;Example:&#10;In the neon-drenched alleys of Neo-Kyoto, Kaito watched rain cascade over ancient torii gates. Shadows stretched as mechanical sirens wailed in the mist..."></textarea>
+
+        <!-- Script Metrics Counter -->
+        <div class="flex justify-between items-center mt-3 pt-2 border-t border-white/[0.04]">
+          <span id="char-count" class="text-[11px] text-slate-400 font-mono">0 characters</span>
+          <span class="text-[11px] text-slate-400">≈ <span id="word-count" class="text-cyan-400 font-semibold font-mono">0</span> words</span>
+        </div>
+
+        <!-- Parse Story Button -->
+        <button id="btn-parse" onclick="parseStory()"
+                class="btn-quantum-primary mt-3.5 w-full py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2.5">
+          <svg class="w-4 h-4 text-cyan-300" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z"/>
+          </svg>
+          <span id="btn-parse-text">Analyze &amp; Dissect Scenes</span>
+          <div id="parse-spinner" class="hidden quantum-loader scale-75">
+            <div class="quantum-loader-ring"></div>
+            <div class="quantum-loader-ring"></div>
+            <div class="quantum-loader-ring"></div>
+          </div>
+        </button>
+      </div>
+
+      <!-- Parsed Storyboard Scenes Panel -->
+      <div class="glass-studio rounded-2xl p-5 flex flex-col min-h-[220px]">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <span class="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12"/>
+              </svg>
+            </span>
+            <h2 class="font-bold text-xs uppercase tracking-widest text-slate-300">Storyboard Breakdown</h2>
+          </div>
+          <span id="scene-count-badge" class="hidden text-xs font-mono font-bold bg-cyan-950 text-cyan-300 border border-cyan-500/40 px-2.5 py-0.5 rounded-full shadow-[0_0_10px_rgba(0,242,254,0.2)]"></span>
+        </div>
+
+        <!-- Empty Scene State -->
+        <div id="scenes-empty" class="flex-1 flex flex-col items-center justify-center text-center py-8">
+          <div class="w-12 h-12 rounded-xl bg-cosmos-900 border border-indigo-500/20 flex items-center justify-center mb-2.5 text-slate-500 shadow-inner">
+            <svg class="w-6 h-6 text-slate-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h8.25"/>
+            </svg>
+          </div>
+          <p class="text-slate-400 text-xs font-medium">No scenes parsed yet.</p>
+          <p class="text-slate-500 text-[11px] mt-0.5">Click "Analyze &amp; Dissect Scenes" above to generate scene cues.</p>
+        </div>
+
+        <!-- Scenes List with Cinematic Cues -->
+        <div id="scenes-list" class="space-y-2 hidden max-h-72 overflow-y-auto pr-1.5"></div>
+      </div>
+
+      <!-- Generation Engine Control Console -->
+      <div class="glass-studio rounded-2xl p-5">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="p-1.5 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/>
+            </svg>
+          </span>
+          <h2 class="font-bold text-xs uppercase tracking-widest text-slate-300">Diffusion Engine Controls</h2>
+        </div>
+
+        <!-- Model Selection -->
+        <div class="mb-4">
+          <label for="model-select" class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
+            Target Neural Architecture
+          </label>
+          <div class="relative">
+            <select id="model-select"
+                    class="w-full appearance-none rounded-xl px-4 py-3 text-sm font-semibold text-slate-100
+                           bg-cosmos-900 border border-indigo-500/30 cursor-pointer
+                           focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400
+                           transition-all pr-10 shadow-inner">
+              <option value="quantum" class="bg-cosmos-950 text-cyan-300">⚛️ Quantum-Enhanced SDXL (Colab GPU)</option>
+              <option value="standard" class="bg-cosmos-950 text-indigo-300">🎨 Standard SDXL (Colab GPU)</option>
+              <option value="mock" class="bg-cosmos-950 text-slate-300">⚡ Fast Local Preview (Instant Mock)</option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-cyan-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/>
+              </svg>
+            </div>
+          </div>
+          <p id="model-desc" class="mt-2 text-xs text-cyan-300/80 bg-cyan-950/30 border border-cyan-500/20 rounded-lg p-2 leading-relaxed">
+            Quantum mode routes prompts through PennyLane quantum state vectors to modulate text embeddings before diffusion on Google Colab.
+          </p>
+        </div>
+
+        <!-- Generation Trigger Buttons -->
+        <div class="grid grid-cols-3 gap-3">
+          <button id="btn-start" onclick="startGeneration()" disabled
+                  class="col-span-2 btn-quantum-action py-3 px-4 rounded-xl text-sm font-bold text-cosmos-950 flex items-center justify-center gap-2">
+            <svg class="w-4 h-4 text-cosmos-950" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"/>
+            </svg>
+            <span>Launch Pipeline</span>
+          </button>
+          
+          <button id="btn-stop" onclick="stopGeneration()" disabled
+                  class="btn-quantum-danger py-3 px-4 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <rect width="14" height="14" x="5" y="5" rx="2"/>
+            </svg>
+            <span>Halt</span>
+          </button>
+        </div>
+
+        <!-- Glowing Progress Track -->
+        <div class="mt-4 pt-3 border-t border-white/[0.04]">
+          <div class="flex items-center justify-between text-xs mb-2">
+            <span id="status-text" class="font-medium text-slate-300">Ready — awaiting narrative parsing.</span>
+            <span id="progress-fraction" class="font-mono text-cyan-400 font-bold">0 / 0</span>
+          </div>
+
+          <div class="h-2 rounded-full quantum-progress-track overflow-hidden relative">
+            <div id="progress-bar-fill" class="h-full rounded-full w-0"></div>
+          </div>
+
+          <!-- Dynamic Status Stream Bar -->
+          <div id="status-detail" class="hidden mt-3 rounded-xl p-3 bg-cosmos-900/90 border border-cyan-500/30 flex items-center gap-3">
+            <div id="status-spinner" class="quantum-loader scale-75 flex-shrink-0">
+              <div class="quantum-loader-ring"></div>
+              <div class="quantum-loader-ring"></div>
+              <div class="quantum-loader-ring"></div>
+            </div>
+            <div class="overflow-hidden">
+              <p id="status-scene-text" class="text-xs font-bold text-cyan-300 truncate">Synthesizing Scene...</p>
+              <p id="status-subtext" class="text-[11px] text-slate-400 mt-0.5 truncate">Streaming latent tensors through Google Colab ngrok tunnel...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ╔══════════════════════════════════════
+         RIGHT PANEL — Cinematic Storyboard Gallery (7 cols)
+    ══════════════════════════════════════╗ -->
+    <section class="lg:col-span-7 flex flex-col gap-4">
+      <div class="glass-studio rounded-2xl p-6 flex-1 flex flex-col">
+        
+        <!-- Gallery Header -->
+        <div class="flex items-center justify-between pb-4 border-b border-white/[0.06] mb-5">
+          <div class="flex items-center gap-3">
+            <div class="p-2 rounded-xl bg-gradient-to-br from-indigo-500/20 to-cyan-500/20 border border-indigo-500/30 text-cyan-300">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <rect width="18" height="14" x="3" y="5" rx="2"/>
+                <circle cx="8.5" cy="10.5" r="1.5"/>
+                <polyline points="21 16 16 11 5 22"/>
+              </svg>
+            </div>
+            <div>
+              <h2 class="font-extrabold text-sm uppercase tracking-wider text-slate-100">Cinematic Scene Gallery</h2>
+              <p class="text-xs text-slate-400">High-Fidelity AI Illustrative Frames</p>
+            </div>
+          </div>
+          <span id="gallery-count" class="text-xs font-mono font-bold px-3 py-1 rounded-full bg-cosmos-900 border border-indigo-500/30 text-cyan-400 shadow-sm">
+            0 frames ready
+          </span>
+        </div>
+
+        <!-- Empty Gallery Visual State -->
+        <div id="gallery-empty" class="flex-1 flex flex-col items-center justify-center py-20 text-center">
+          <div class="relative mb-5">
+            <div class="w-24 h-24 rounded-3xl bg-cosmos-900 border border-indigo-500/30 flex items-center justify-center shadow-[0_0_40px_rgba(79,70,229,0.2)] animate-float-slow">
+              <svg class="w-12 h-12 text-slate-600" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/>
+              </svg>
+            </div>
+            <!-- Orbiting Quantum Particle Rings -->
+            <div class="absolute -top-3 -right-3 w-6 h-6 rounded-full border border-cyan-400/50 animate-ping" style="animation-duration: 3s;"></div>
+            <div class="absolute -bottom-2 -left-2 w-5 h-5 rounded-full border border-purple-500/40 animate-ping" style="animation-duration: 4s; animation-delay: -1s;"></div>
+          </div>
+          <h3 class="text-base font-bold text-slate-300">Director's Studio Canvas Empty</h3>
+          <p class="text-slate-500 text-xs max-w-sm mt-1 leading-relaxed">
+            Parse a story and initiate generation. Finished scene frames will render here chronologically as high-resolution diffusion artwork.
+          </p>
+        </div>
+
+        <!-- Rendered Gallery Grid -->
+        <div id="gallery-grid"
+             class="hidden grid grid-cols-1 sm:grid-cols-2 gap-5 max-h-[calc(100vh-270px)] overflow-y-auto pr-2 pb-4">
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ════════════════════════════════════════════
+       TOAST SYSTEM
+  ════════════════════════════════════════════ -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transition-all duration-300 transform translate-y-10 opacity-0 pointer-events-none">
+    <div id="toast-inner" class="glass-studio rounded-xl px-4 py-3 flex items-center gap-3 shadow-2xl min-w-64 max-w-md border border-cyan-500/40">
+      <div id="toast-icon" class="w-5 h-5 flex-shrink-0"></div>
+      <p id="toast-msg" class="text-xs font-semibold text-slate-200"></p>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       JAVASCRIPT LOGIC & QUANTUM CANVAS
+  ════════════════════════════════════════════ -->
+  <script>
+    // ── Interactive Quantum Particle Canvas ──────────────────────────────────
+    (function initQuantumCanvas() {
+      const canvas = document.getElementById('quantum-canvas');
+      const ctx = canvas.getContext('2d');
+      let width, height;
+      let particles = [];
+      const mouse = { x: null, y: null, radius: 140 };
+
+      function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      window.addEventListener('mousemove', (e) => {
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+      });
+      window.addEventListener('mouseout', () => {
+        mouse.x = null;
+        mouse.y = null;
+      });
+
+      const particleCount = Math.min(Math.floor((width * height) / 18000), 75);
+
+      for (let i = 0; i < particleCount; i++) {
+        particles.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          vx: (Math.random() - 0.5) * 0.45,
+          vy: (Math.random() - 0.5) * 0.45,
+          size: Math.random() * 2 + 1,
+          color: Math.random() > 0.6 ? '#00f2fe' : (Math.random() > 0.3 ? '#7928ca' : '#4f46e5'),
+          alpha: Math.random() * 0.4 + 0.15
+        });
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, width, height);
+
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+
+          if (p.x < 0) p.x = width;
+          if (p.x > width) p.x = 0;
+          if (p.y < 0) p.y = height;
+          if (p.y > height) p.y = 0;
+
+          // Mouse reactivity
+          if (mouse.x !== null) {
+            const dx = mouse.x - p.x;
+            const dy = mouse.y - p.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < mouse.radius) {
+              const force = (mouse.radius - dist) / mouse.radius;
+              p.x -= (dx / dist) * force * 2;
+              p.y -= (dy / dist) * force * 2;
+            }
+          }
+
+          // Draw particle
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.alpha;
+          ctx.fill();
+
+          // Connect nearby particles with subtle quantum entanglement lines
+          for (let j = i + 1; j < particles.length; j++) {
+            const p2 = particles[j];
+            const dx = p.x - p2.x;
+            const dy = p.y - p2.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < 110) {
+              ctx.beginPath();
+              ctx.moveTo(p.x, p.y);
+              ctx.lineTo(p2.x, p2.y);
+              ctx.strokeStyle = '#00f2fe';
+              ctx.globalAlpha = (1 - dist / 110) * 0.12;
+              ctx.lineWidth = 0.8;
+              ctx.stroke();
+            }
+          }
+        }
+        ctx.globalAlpha = 1;
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
+
+    // ── Application Configuration & State ─────────────────────────────────────
+    const API_BASE     = window.location.origin.startsWith('http') ? window.location.origin : 'http://127.0.0.1:8000';
+    const POLL_MS      = 3500;
+
+    let parsedScenes     = [];
+    let pollInterval     = null;
+    let renderedImageSet = new Set();
+
+    // DOM Elements
+    const storyInput      = document.getElementById('story-input');
+    const charCount       = document.getElementById('char-count');
+    const wordCount       = document.getElementById('word-count');
+    const btnParse        = document.getElementById('btn-parse');
+    const btnParseText    = document.getElementById('btn-parse-text');
+    const parseSpinner    = document.getElementById('parse-spinner');
+    const btnStart        = document.getElementById('btn-start');
+    const btnStop         = document.getElementById('btn-stop');
+    const scenesList      = document.getElementById('scenes-list');
+    const scenesEmpty     = document.getElementById('scenes-empty');
+    const sceneCountBadge = document.getElementById('scene-count-badge');
+    const statusText      = document.getElementById('status-text');
+    const statusDetail    = document.getElementById('status-detail');
+    const statusSceneText = document.getElementById('status-scene-text');
+    const statusSubtext   = document.getElementById('status-subtext');
+    const progressFill    = document.getElementById('progress-bar-fill');
+    const progressFrac    = document.getElementById('progress-fraction');
+    const galleryGrid     = document.getElementById('gallery-grid');
+    const galleryEmpty    = document.getElementById('gallery-empty');
+    const galleryCount    = document.getElementById('gallery-count');
+    const globalPill      = document.getElementById('global-status-pill');
+    const modelSelect     = document.getElementById('model-select');
+    const modelDesc       = document.getElementById('model-desc');
+
+    const MODEL_DESCRIPTIONS = {
+      quantum:  '⚛️ Quantum Mode: Enhances SDXL prompt embeddings via PennyLane simulated quantum states before diffusion on Colab GPU.',
+      standard: '🎨 Standard Mode: Direct vanilla SDXL diffusion processing on Colab GPU without quantum state modulation.',
+      mock:     '⚡ Instant Preview: Creates rapid local procedural illustrations in < 1 second for instant storyboard prototyping.',
+    };
+
+    modelSelect.addEventListener('change', () => {
+      modelDesc.textContent = MODEL_DESCRIPTIONS[modelSelect.value] || '';
+    });
+
+    // Word & Char Counter
+    storyInput.addEventListener('input', () => {
+      const text = storyInput.value;
+      charCount.textContent = `${text.length.toLocaleString()} characters`;
+      wordCount.textContent = text.trim() ? text.trim().split(/\s+/).length.toLocaleString() : '0';
+    });
+
+    // Sample Story Loader
+    function loadSampleStory() {
+      storyInput.value = `The Chrono-Observatory hovered silently above the rings of Saturn, its crystal dome reflecting bands of amber and ice. 
+
+Inside the central chamber, Doctor Vane adjusted the quantum resonator. Golden particle streams coalesced into an ethereal doorway suspended in mid-air.
+
+Suddenly, a brilliant flare of turquoise energy erupted from the gateway, casting long neon shadows across the titanium floor as the first visitor stepped through.`;
+      storyInput.dispatchEvent(new Event('input'));
+      showToast('Sample narrative loaded into script board.', 'info');
+    }
+
+    // Toast Notifications
+    let toastTimer = null;
+    function showToast(msg, type = 'info') {
+      const toast      = document.getElementById('toast');
+      const toastIcon  = document.getElementById('toast-icon');
+      const toastMsg   = document.getElementById('toast-msg');
+      const toastInner = document.getElementById('toast-inner');
+
+      const icons = {
+        success: `<svg fill="none" stroke="#09d3ac" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/></svg>`,
+        error:   `<svg fill="none" stroke="#f87171" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>`,
+        info:    `<svg fill="none" stroke="#00f2fe" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"/></svg>`,
+        warning: `<svg fill="none" stroke="#fbbf24" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg>`,
+      };
+
+      toastIcon.innerHTML = icons[type] || icons.info;
+      toastMsg.textContent = msg;
+
+      toastInner.className = `glass-studio rounded-xl px-4 py-3 flex items-center gap-3 shadow-2xl min-w-64 max-w-md border ${
+        type === 'success' ? 'border-teal-500/40' :
+        type === 'error'   ? 'border-red-500/40' :
+        type === 'warning' ? 'border-amber-500/40' : 'border-cyan-500/40'
+      }`;
+
+      toast.classList.remove('translate-y-10', 'opacity-0', 'pointer-events-none');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.add('translate-y-10', 'opacity-0', 'pointer-events-none');
+      }, 4000);
+    }
+
+    // Engine Status Badges
+    function setGlobalPill(state) {
+      const configs = {
+        idle:    { dot: 'bg-slate-400',   label: 'Engine Idle',       border: 'border-slate-700/60', text: 'text-slate-400' },
+        running: { dot: 'bg-cyan-400 animate-pulse', label: 'Diffusion Active',   border: 'border-cyan-500/50 shadow-[0_0_15px_rgba(0,242,254,0.3)]', text: 'text-cyan-300' },
+        done:    { dot: 'bg-emerald-400', label: 'Story Rendered',    border: 'border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]', text: 'text-emerald-300' },
+        error:   { dot: 'bg-red-400',     label: 'Pipeline Halted',   border: 'border-red-500/50', text: 'text-red-300' },
+      };
+      const c = configs[state] || configs.idle;
+      globalPill.className = `inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold tracking-wide border ${c.border} bg-slate-900/80 ${c.text}`;
+      globalPill.innerHTML = `<span class="w-2 h-2 rounded-full ${c.dot} inline-block"></span><span>${c.label}</span>`;
+    }
+
+    // Script Management
+    function clearStory() {
+      storyInput.value = '';
+      charCount.textContent = '0 characters';
+      wordCount.textContent = '0';
+      clearScenes();
+      stopPolling();
+      resetProgress();
+      btnStart.disabled = true;
+      setGlobalPill('idle');
+    }
+
+    function clearScenes() {
+      parsedScenes = [];
+      scenesList.innerHTML = '';
+      scenesList.classList.add('hidden');
+      scenesEmpty.classList.remove('hidden');
+      sceneCountBadge.classList.add('hidden');
+    }
+
+    // Story Dissection / Parser
+    async function parseStory() {
+      const story = storyInput.value.trim();
+      if (!story) {
+        showToast('Please insert a story narrative first.', 'warning');
+        return;
+      }
+
+      btnParse.disabled = true;
+      btnParseText.textContent = 'Dissecting Narrative...';
+      parseSpinner.classList.remove('hidden');
+      clearScenes();
+      resetProgress();
+      stopPolling();
+      renderedImageSet.clear();
+
+      try {
+        const res = await fetch(`${API_BASE}/api/parse-story`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ story }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.detail || 'Scene parsing failed.');
+
+        parsedScenes = data.scenes;
+        renderScenes(parsedScenes);
+        btnStart.disabled = false;
+        progressFrac.textContent = `0 / ${data.total_scenes}`;
+        statusText.textContent = `Dissected ${data.total_scenes} storyboard scene${data.total_scenes !== 1 ? 's' : ''} — ready to direct.`;
+        showToast(`Dissected ${data.total_scenes} scenes successfully!`, 'success');
+
+        // Clear gallery
+        galleryGrid.innerHTML = '';
+        galleryGrid.classList.add('hidden');
+        galleryEmpty.classList.remove('hidden');
+        galleryCount.textContent = '0 frames ready';
+
+      } catch (err) {
+        showToast(`Error: ${err.message}`, 'error');
+        statusText.textContent = '❌ Parsing failed — check server connectivity.';
+      } finally {
+        btnParse.disabled = false;
+        btnParseText.textContent = 'Analyze & Dissect Scenes';
+        parseSpinner.classList.add('hidden');
+      }
+    }
+
+    // Render Scene Cards
+    function renderScenes(scenes) {
+      scenesList.innerHTML = '';
+      scenes.forEach((prompt, i) => {
+        const num = i + 1;
+        const short = prompt.replace(/^Cinematic story illustration, scene \d+:\s*/i, '');
+        const div = document.createElement('div');
+        div.className = 'storyboard-scene rounded-xl p-3 cursor-pointer group';
+        div.innerHTML = `
+          <div class="flex items-start gap-3">
+            <span class="text-xs font-mono font-bold px-2 py-0.5 rounded-lg flex-shrink-0 bg-indigo-500/20 text-cyan-300 border border-indigo-500/30 group-hover:border-cyan-400 group-hover:text-cyan-200 transition-colors">
+              SCENE ${num}
+            </span>
+            <p class="text-xs text-slate-300 leading-relaxed line-clamp-2">${escapeHtml(short)}</p>
+          </div>`;
+        scenesList.appendChild(div);
+      });
+
+      scenesEmpty.classList.add('hidden');
+      scenesList.classList.remove('hidden');
+      sceneCountBadge.textContent = `${scenes.length} SCENES`;
+      sceneCountBadge.classList.remove('hidden');
+    }
+
+    // Pipeline Initiation
+    async function startGeneration() {
+      if (parsedScenes.length === 0) {
+        showToast('Analyze and dissect scenes before generating.', 'warning');
+        return;
+      }
+
+      const selectedModel = modelSelect.value;
+      const isQuantum     = selectedModel === 'quantum';
+      const isMock        = selectedModel === 'mock';
+      const modelLabel    = isMock ? 'Instant Mock' : (isQuantum ? 'Quantum SDXL' : 'Standard SDXL');
+
+      btnStart.disabled    = true;
+      btnStop.disabled     = false;
+      modelSelect.disabled = true;
+      setGlobalPill('running');
+      statusDetail.classList.remove('hidden');
+
+      statusSceneText.textContent = `Synthesizing Scene 1 of ${parsedScenes.length}`;
+      statusSubtext.textContent = isMock 
+        ? 'Generating instant procedural previews...' 
+        : `Transmitting latent request to Google Colab GPU tunnel (${modelLabel})...`;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/start-generation`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: selectedModel }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Could not initiate generation pipeline.');
+
+        showToast(`${modelLabel} pipeline dispatched!`, 'success');
+        startPolling();
+      } catch (err) {
+        showToast(`Error: ${err.message}`, 'error');
+        btnStart.disabled    = false;
+        btnStop.disabled     = true;
+        modelSelect.disabled = false;
+        setGlobalPill('error');
+        statusDetail.classList.add('hidden');
+      }
+    }
+
+    // Pipeline Stop
+    async function stopGeneration() {
+      try {
+        await fetch(`${API_BASE}/api/stop-generation`, { method: 'POST' });
+        showToast('Stop instruction transmitted — halting at scene boundary.', 'warning');
+      } catch (err) {
+        showToast(`Stop failed: ${err.message}`, 'error');
+      }
+    }
+
+    // Polling System
+    function startPolling() {
+      if (pollInterval) clearInterval(pollInterval);
+      pollInterval = setInterval(pollStatus, POLL_MS);
+      pollStatus();
+    }
+
+    function stopPolling() {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
+    }
+
+    async function pollStatus() {
+      try {
+        const res = await fetch(`${API_BASE}/api/generation-status`);
+        const data = await res.json();
+        applyStatus(data);
+      } catch (_) {}
+    }
+
+    function applyStatus(data) {
+      const { is_running, current_scene, total_scenes, image_urls } = data;
+
+      const pct = total_scenes > 0 ? Math.round((image_urls.length / total_scenes) * 100) : 0;
+      progressFill.style.width = `${pct}%`;
+      progressFrac.textContent = `${image_urls.length} / ${total_scenes}`;
+
+      if (is_running) {
+        statusSceneText.textContent = `Synthesizing Scene ${current_scene} of ${total_scenes}`;
+        statusSubtext.textContent = 'Google Colab neural diffusion in progress...';
+        statusText.textContent = `Diffusion active: Scene ${current_scene} / ${total_scenes}...`;
+        statusDetail.classList.remove('hidden');
+      }
+
+      image_urls.forEach((url, idx) => {
+        const sceneId = idx + 1;
+        if (!renderedImageSet.has(sceneId)) {
+          renderedImageSet.add(sceneId);
+          addImageCard(sceneId, url, parsedScenes[idx] || '');
+        }
+      });
+
+      galleryCount.textContent = `${image_urls.length} frame${image_urls.length !== 1 ? 's' : ''} ready`;
+
+      if (!is_running && pollInterval) {
+        stopPolling();
+        btnStart.disabled = false;
+        btnStop.disabled = true;
+        modelSelect.disabled = false;
+
+        if (image_urls.length === total_scenes && total_scenes > 0) {
+          setGlobalPill('done');
+          statusText.textContent = `All ${total_scenes} storyboard frames generated!`;
+          statusSceneText.textContent = 'Diffusion Pipeline Complete.';
+          statusSubtext.textContent = `${total_scenes} cinematic illustration${total_scenes !== 1 ? 's' : ''} rendered.`;
+          showToast(`Directorial master render complete: ${total_scenes} frames!`, 'success');
+        } else {
+          setGlobalPill('idle');
+          statusText.textContent = '⏹ Generation halted.';
+          statusDetail.classList.add('hidden');
+        }
+      }
+    }
+
+    // Cinematic Gallery Card
+    function addImageCard(sceneId, imageUrl, promptText) {
+      galleryEmpty.classList.add('hidden');
+      galleryGrid.classList.remove('hidden');
+
+      const shortPrompt = promptText.replace(/^Cinematic story illustration, scene \d+:\s*/i, '');
+      const fullUrl = imageUrl.startsWith('http') ? imageUrl : `${API_BASE}${imageUrl}`;
+      const isError = imageUrl.includes('error_scene');
+
+      const card = document.createElement('div');
+      card.className = 'cinematic-card overflow-hidden flex flex-col group';
+      card.id = `card-scene-${sceneId}`;
+      card.innerHTML = `
+        <div class="relative bg-cosmos-950 aspect-video overflow-hidden">
+          ${isError
+            ? `<div class="w-full h-full flex flex-col items-center justify-center p-4">
+                 <svg class="w-8 h-8 text-red-400 mb-1" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"/>
+                 </svg>
+                 <p class="text-xs text-red-300 font-medium">Generation Error</p>
+               </div>`
+            : `<img src="${fullUrl}" alt="Scene ${sceneId}"
+                    class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    onerror="this.parentElement.innerHTML='<div class=\\'w-full h-full flex items-center justify-center\\'><p class=\\'text-xs text-slate-500\\'>Image rendering in progress...</p></div>'" />
+               <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
+               <div class="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+                 <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-cosmos-950/80 text-cyan-300 border border-cyan-400/40 backdrop-blur-md shadow-lg">
+                   FRAME #${sceneId}
+                 </span>
+               </div>`
+          }
+        </div>
+        <div class="p-3.5 flex flex-col justify-between flex-1">
+          <p class="text-xs text-slate-300 leading-relaxed line-clamp-2 font-normal">${escapeHtml(shortPrompt.slice(0, 140))}${shortPrompt.length > 140 ? '…' : ''}</p>
+          ${!isError ? `
+          <div class="mt-3 pt-2.5 border-t border-white/[0.06] flex items-center justify-between">
+            <span class="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Cinematic Frame</span>
+            <a href="${fullUrl}" target="_blank"
+               class="inline-flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-200 transition-colors font-semibold">
+              <span>Inspect Raw</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 19.5 15-15m0 0H8.25m11.25 0v11.25"/>
+              </svg>
+            </a>
+          </div>` : ''}
+        </div>`;
+
+      galleryGrid.insertBefore(card, galleryGrid.firstChild);
+    }
+
+    // Helpers
+    function resetProgress() {
+      progressFill.style.width = '0%';
+      progressFrac.textContent = '0 / 0';
+      statusText.textContent = 'Ready — awaiting narrative parsing.';
+      statusDetail.classList.add('hidden');
+    }
+
+    function escapeHtml(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // Ctrl+Enter Keyboard Shortcut
+    storyInput.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') parseStory();
+    });
+
+    // Check API Status on Load
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/health`);
+        if (res.ok) showToast('Quantum Studio Backend connected ✓', 'success');
+      } catch (_) {
+        showToast('Backend offline — please verify main.py is active.', 'warning');
+      }
+    })();
+  </script>
+</body>
+</html>

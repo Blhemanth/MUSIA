@@ -1,0 +1,45 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Secrets and environment configs
+kaggle.json
+*.env
+.env.*
+
+# Generated media / runtime outputs
+backend/static/generated_scenes/*.png
+backend/static/generated_scenes/*.jpg
+!backend/static/generated_scenes/.gitkeep
+
+# Temporary / test files
+backend/temp_kaggle_script.py
+backend/test_s.py
+test_utf8.txt
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
