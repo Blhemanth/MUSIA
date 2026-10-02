@@ -90,22 +90,20 @@ class QuantumFeatureEnhancer(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         orig_device = x.device
         orig_dtype = x.dtype
-        enhancer_device = next(self.norm.parameters()).device
 
-        # Convert to float32 on enhancer device for LayerNorm & Quantum circuit
-        x_f32 = x.to(device=enhancer_device, dtype=torch.float32)
-        residual = x_f32
-        normed = self.norm(x_f32)
+        # Always evaluate quantum simulation strictly on CPU to avoid device mismatch with PennyLane default.qubit
+        x_cpu = x.detach().to(device="cpu", dtype=torch.float32)
+        residual = x_cpu
+        normed = self.norm(x_cpu)
         compressed = self.compress(normed)
 
         orig_shape = compressed.shape
         flat = compressed.view(-1, self.n_qubits)
-        ql_dev = next(self.quantum_layer.parameters()).device
 
         q_list = []
         for i in range(flat.shape[0]):
-            tok_out = self.quantum_layer(flat[i].to(ql_dev))
-            q_list.append(tok_out.to(device=enhancer_device, dtype=torch.float32))
+            tok_out = self.quantum_layer(flat[i])
+            q_list.append(tok_out.cpu())
 
         quantum_expectations = torch.stack(q_list).view(*orig_shape)
         expanded = self.expand(quantum_expectations)
@@ -118,15 +116,14 @@ class QuantumFeatureEnhancer(nn.Module):
 # ------------------------------------------------------------------------------
 # 3. INITIALIZE MODELS
 # ------------------------------------------------------------------------------
-# Load PQC Model
+# Load PQC Model - STRICTLY kept on CPU to match PennyLane's default.qubit simulator
 pqc_enhancer = None
 if os.path.exists(PQC_PATH):
     try:
         pqc_enhancer = QuantumFeatureEnhancer(embed_dim=2048, n_qubits=4, n_layers=2)
         state_dict = torch.load(PQC_PATH, map_location="cpu", weights_only=True)
         pqc_enhancer.load_state_dict(state_dict)
-        if DEVICE == "cuda":
-            pqc_enhancer = pqc_enhancer.to(DEVICE)
+        pqc_enhancer = pqc_enhancer.to("cpu")
         pqc_enhancer.eval()
         print(f"[OK] Successfully loaded Quantum PQC Enhancer from {PQC_PATH}")
     except Exception as e:
@@ -210,9 +207,7 @@ def generate():
 
             # Apply Quantum Feature Enhancement if enabled
             if use_quantum and pqc_enhancer is not None:
-                # PQC operates in float32 then converts back to pipeline dtype
-                orig_dtype = prompt_embeds.dtype
-                prompt_embeds = pqc_enhancer(prompt_embeds.float()).to(orig_dtype)
+                prompt_embeds = pqc_enhancer(prompt_embeds)
                 print("      [PQC] Embeddings modulated in 4-qubit Hilbert space.")
 
             # Generate 16:9 cinematic storyboard illustration
