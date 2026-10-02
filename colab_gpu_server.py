@@ -243,6 +243,13 @@ if __name__ == "__main__":
     heartbeat = threading.Thread(target=keep_alive_worker, daemon=True)
     heartbeat.start()
 
+    # --------------------------------------------------------------------------
+    # Paste your ngrok auth token here (from https://dashboard.ngrok.com/get-started/your-authtoken)
+    # --------------------------------------------------------------------------
+    NGROK_AUTH_TOKEN = "YOUR_NGROK_AUTHTOKEN_HERE"
+    if NGROK_AUTH_TOKEN and NGROK_AUTH_TOKEN != "YOUR_NGROK_AUTHTOKEN_HERE":
+        ngrok.set_auth_token(NGROK_AUTH_TOKEN)
+
     # Launch ngrok tunnel
     tunnel = ngrok.connect(PORT)
     public_url = tunnel.public_url
