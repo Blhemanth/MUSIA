@@ -22,7 +22,7 @@ from .quantum_pipeline import (
 from .story_parser import detect_language, normalize_multilingual_text
 
 # Active Google Colab ngrok tunnel URL (can be overridden via COLAB_NGROK_URL env var)
-COLAB_NGROK_URL = os.environ.get("COLAB_NGROK_URL", "https://lend-eggplant-majesty.ngrok-free.dev")
+COLAB_NGROK_URL = os.environ.get("COLAB_NGROK_URL", "https://carnation-dislike-nervous.ngrok-free.dev")
 
 
 def generate_scene_image(scene_prompt: str, scene_id: int, use_quantum: bool = True) -> str:

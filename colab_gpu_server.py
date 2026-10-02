@@ -88,7 +88,7 @@ class QuantumFeatureEnhancer(nn.Module):
         self.scale = nn.Parameter(torch.tensor(1.0))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # x shape: (batch, seq_len, 2048)
+        orig_device = x.device
         residual = x
         normed = self.norm(x)
         compressed = self.compress(normed)
@@ -96,7 +96,9 @@ class QuantumFeatureEnhancer(nn.Module):
         orig_shape = compressed.shape
         flat = compressed.view(-1, self.n_qubits)
 
-        q_out = torch.stack([self.quantum_layer(flat[i]) for i in range(flat.shape[0])])
+        # PennyLane default.qubit runs on CPU: transfer flat to CPU and output back to GPU
+        flat_cpu = flat.detach().cpu()
+        q_out = torch.stack([self.quantum_layer(flat_cpu[i]) for i in range(flat_cpu.shape[0])]).to(orig_device)
         quantum_expectations = q_out.view(*orig_shape)
 
         expanded = self.expand(quantum_expectations)
@@ -112,16 +114,18 @@ pqc_enhancer = None
 if os.path.exists(PQC_PATH):
     try:
         pqc_enhancer = QuantumFeatureEnhancer(embed_dim=2048, n_qubits=4, n_layers=2)
-        state_dict = torch.load(PQC_PATH, map_location=DEVICE, weights_only=True)
+        state_dict = torch.load(PQC_PATH, map_location="cpu", weights_only=True)
         pqc_enhancer.load_state_dict(state_dict)
-        pqc_enhancer.to(DEVICE).eval()
+        if DEVICE == "cuda":
+            pqc_enhancer = pqc_enhancer.to(DEVICE)
+        pqc_enhancer.eval()
         print(f"[OK] Successfully loaded Quantum PQC Enhancer from {PQC_PATH}")
     except Exception as e:
         print(f"[WARN] Error loading PQC weights: {e}")
 else:
     print(f"[INFO] PQC weights not found at {PQC_PATH}. Using fallback mode.")
 
-# Load SDXL Base Pipeline
+# Load SDXL Base Pipeline with CPU offloading to fit in Colab T4 VRAM
 print("[MUSIA COLAB] Loading SDXL base model (stabilityai/stable-diffusion-xl-base-1.0)...")
 pipe = StableDiffusionXLPipeline.from_pretrained(
     "stabilityai/stable-diffusion-xl-base-1.0",
@@ -129,17 +133,16 @@ pipe = StableDiffusionXLPipeline.from_pretrained(
     use_safetensors=True,
     variant="fp16" if DEVICE == "cuda" else None,
 )
-pipe = pipe.to(DEVICE)
 
 if DEVICE == "cuda":
-    try:
-        pipe.enable_attention_slicing()
-    except Exception:
-        pass
+    # Drastically lowers VRAM from 15GB to ~5.5GB to eliminate CUDA out of memory!
+    pipe.enable_model_cpu_offload()
     try:
         pipe.vae.enable_tiling()
     except Exception:
         pass
+else:
+    pipe = pipe.to("cpu")
 
 # Load LoRA Adapter from Google Drive
 if os.path.exists(LORA_PATH):
@@ -179,6 +182,9 @@ def generate():
     print(f"      Prompt: {prompt[:80]}...")
 
     try:
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
         with torch.inference_mode():
             # Encode prompt through SDXL dual text encoders
             (
