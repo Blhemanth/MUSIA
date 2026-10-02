@@ -252,15 +252,17 @@ def render_multilingual_scene_illustration(
                 "use_quantum": use_quantum,
                 "scene_id": scene_id
             }
-            resp = requests.post(url, json=payload, timeout=60)
+            resp = requests.post(url, json=payload, timeout=180)
             if resp.status_code == 200:
                 dest_path = os.path.join(OUTPUT_DIR, f"scene_{scene_id}.png")
                 with open(dest_path, "wb") as f:
                     f.write(resp.content)
                 print(f"[OK] Scene {scene_id} generated via Colab GPU!")
                 return f"/static/generated_scenes/scene_{scene_id}.png"
+            else:
+                print(f"[WARN] Colab endpoint returned HTTP {resp.status_code}: {resp.text[:200]}")
         except Exception as e:
-            print(f"[INFO]  Remote GPU tunnel not responding ({e}) — rendering via local Quantum pipeline.")
+            print(f"[INFO] Remote GPU tunnel not responding ({e}) - rendering via local Quantum pipeline.")
 
     # 2. Local High-Fidelity Generation using trained PQC features
     from PIL import Image, ImageDraw, ImageFont
