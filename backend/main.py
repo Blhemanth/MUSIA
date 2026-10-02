@@ -1,7 +1,8 @@
 """
 backend/main.py
 MUSIA - Multilingual Story Illustration
-Phase 2: FastAPI Backend Server (with Kaggle generation pipeline)
+Phase 2+: FastAPI Backend Server — Multilingual Processing (English, Hindi, Bengali)
+           with Quantum-Enhanced PQC Inference Pipeline
 """
 
 import os
@@ -17,8 +18,14 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, field_validator
 
-from .story_parser import parse_story_to_scenes
+from .story_parser import (
+    parse_story_to_scenes,
+    parse_story_scenes_detailed,
+    detect_language,
+    normalize_multilingual_text,
+)
 from .generate_on_kaggle import generate_scene_image, generate_mock_scene_image
+from .quantum_pipeline import weight_manager
 
 # ---------------------------------------------------------------------------
 # App initialisation
@@ -26,8 +33,13 @@ from .generate_on_kaggle import generate_scene_image, generate_mock_scene_image
 
 app = FastAPI(
     title="MUSIA API",
-    description="Multilingual Story Illustration — Phase 2 backend.",
-    version="2.1.0",
+    description=(
+        "Multilingual Story Illustration — Quantum-Enhanced Neural Diffusion.\n\n"
+        "Supports English, Hindi (Devanagari), and Bengali (Bangla) narratives. "
+        "Uses trained 4-qubit PQC Enhancer (`best_pqc_enhancer_fulldataset.pt`) "
+        "and SDXL LoRA adapter (`adapter_model.safetensors`) for inference."
+    ),
+    version="3.0.0",
 )
 
 # Allow all origins (tighten for production)
@@ -124,16 +136,16 @@ async def run_generation_pipeline(model_choice: str = "quantum") -> None:
     use_quantum = (model_choice == "quantum")
     scenes = generation_status["scenes"]
     total  = generation_status["total_scenes"]
-    print(f"🚀 Pipeline starting | model={model_choice} | scenes={total}")
+    print(f"[START] Pipeline starting | model={model_choice} | scenes={total}")
 
     for idx, scene_prompt in enumerate(scenes, start=1):
         # Allow an external stop signal
         if not generation_status["is_running"]:
-            print(f"⛔ Generation pipeline stopped early at scene {idx}/{total}.")
+            print(f"[STOP] Generation pipeline stopped early at scene {idx}/{total}.")
             break
 
         generation_status["current_scene"] = idx
-        print(f"🎬 Processing scene {idx}/{total} ...")
+        print(f"[SCENE] Processing scene {idx}/{total} ...")
 
         try:
             if is_mock:
@@ -145,23 +157,23 @@ async def run_generation_pipeline(model_choice: str = "quantum") -> None:
                     generate_scene_image, scene_prompt, idx, use_quantum
                 )
             generation_status["image_urls"].append(image_url)
-            print(f"✅ Scene {idx} complete → {image_url}")
+            print(f"[OK] Scene {idx} complete -> {image_url}")
         except Exception as exc:
             # Fallback on Colab/tunnel failure: produce a mock placeholder
-            print(f"⚠️  Scene {idx} Colab/generation error — generating mock fallback: {exc}")
+            print(f"[WARN] Scene {idx} Colab/generation error - generating mock fallback: {exc}")
             try:
                 fallback_url = await asyncio.to_thread(
                     generate_mock_scene_image, scene_prompt, idx
                 )
                 generation_status["image_urls"].append(fallback_url)
-                print(f"🖼️  Scene {idx} mock fallback saved → {fallback_url}")
+                print(f"[IMG] Scene {idx} mock fallback saved -> {fallback_url}")
             except Exception as fb_exc:
                 error_url = f"/static/generated_scenes/error_scene_{idx}.png"
                 generation_status["image_urls"].append(error_url)
-                print(f"❌ Scene {idx} failed (even mock fallback): {fb_exc}")
+                print(f"[ERR] Scene {idx} failed (even mock fallback): {fb_exc}")
 
     generation_status["is_running"] = False
-    print("🏁 Generation pipeline finished.")
+    print("[DONE] Generation pipeline finished.")
 
 
 # ---------------------------------------------------------------------------
@@ -179,8 +191,15 @@ def serve_frontend():
 
 @app.get("/api/health", summary="Health check")
 async def health_check():
-    """Health check endpoint confirming API status."""
-    return {"status": "success", "message": "MUSIA API v2 is up and running."}
+    """Health check confirming API status and model weight availability."""
+    return {
+        "status": "success",
+        "message": "MUSIA API v3 is up and running.",
+        "pqc_model_loaded": weight_manager.is_pqc_loaded,
+        "lora_adapter_available": weight_manager.has_lora_adapter,
+        "device": weight_manager.device,
+        "supported_languages": ["English", "Hindi (Devanagari)", "Bengali (Bangla)"],
+    }
 
 
 @app.post(
@@ -204,16 +223,73 @@ async def parse_story(request: StoryRequest):
         )
 
     # Reset global state for a new story
-    generation_status = {
+    generation_status.clear()
+    generation_status.update({
         "is_running": False,
         "current_scene": 0,
         "total_scenes": len(scenes),
         "scenes": scenes,
         "image_urls": [],
         "selected_model": "quantum",  # reset to default; overridden at start-generation ('quantum' | 'standard' | 'mock')
-    }
+    })
 
     return ParseStoryResponse(total_scenes=len(scenes), scenes=scenes)
+
+
+@app.post(
+    "/api/parse-story-detailed",
+    summary="Parse story with language detection metadata",
+)
+async def parse_story_detailed(request: StoryRequest):
+    """
+    Accept raw story text in English, Hindi, or Bengali and return detailed
+    scene metadata including language detection, token counts, and scene titles.
+    Supports Purna Viram '।' sentence boundaries for Indic scripts.
+    """
+    details = parse_story_scenes_detailed(request.story)
+    if not details:
+        raise HTTPException(
+            status_code=422,
+            detail="Story could not be parsed into any scenes. Please provide more content.",
+        )
+    detected_lang = detect_language(normalize_multilingual_text(request.story))
+    lang_names = {"en": "English", "hi": "Hindi (Devanagari)", "bn": "Bengali (Bangla)", "mixed": "Multilingual"}
+    return {
+        "total_scenes": len(details),
+        "detected_language": detected_lang,
+        "language_name": lang_names.get(detected_lang, "English"),
+        "scenes": details,
+    }
+
+
+@app.get("/api/model-info", summary="Trained model weight info")
+async def model_info():
+    """
+    Returns status of the loaded trained model weights:
+    - Quantum PQC Enhancer (`best_pqc_enhancer_fulldataset.pt`)
+    - SDXL LoRA Adapter (`adapter_model.safetensors`)
+    """
+    return {
+        "quantum_pqc_enhancer": {
+            "loaded": weight_manager.is_pqc_loaded,
+            "architecture": "4-qubit PQC (AngleEmbedding + BasicEntanglerLayers)",
+            "layers": {"n_qubits": 4, "n_layers": 2, "embed_dim": 2048},
+            "file": "best_pqc_enhancer_fulldataset.pt",
+        },
+        "lora_adapter": {
+            "available": weight_manager.has_lora_adapter,
+            "type": "SDXL UNet LoRA (rank 32)",
+            "total_tensors": 1120,
+            "file": "adapter_model.safetensors",
+        },
+        "device": weight_manager.device,
+        "inference_modes": ["quantum", "standard", "mock"],
+        "supported_languages": [
+            {"code": "en", "name": "English", "script": "Latin"},
+            {"code": "hi", "name": "Hindi", "script": "Devanagari (U+0900-U+097F)"},
+            {"code": "bn", "name": "Bengali", "script": "Bangla (U+0980-U+09FF)"},
+        ],
+    }
 
 
 @app.post("/api/start-generation", summary="Start Kaggle image generation")

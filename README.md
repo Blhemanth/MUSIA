@@ -118,6 +118,12 @@ http://127.0.0.1:8000
 ```
 *(The interactive API documentation is available at `http://127.0.0.1:8000/docs`)*
 
+### 6. Run the Test Suite
+Execute the automated test suite (25 tests covering story parsing, quantum pipelines, and REST APIs):
+```bash
+python -m unittest discover -s tests -p "test_*.py"
+```
+
 ---
 
 ## ☁️ Google Colab GPU Setup (For Quantum/Standard Diffusion)

@@ -6,6 +6,9 @@
   <title>MUSIA — Quantum Studio | Multilingual Story Illustration</title>
   <meta name="description" content="MUSIA transforms written narratives into cinematic visuals through Quantum-Enhanced Neural Diffusion and Director's Storyboard." />
 
+  <!-- Three.js (for WebGL Image Generation Shader Effect) -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -311,6 +314,77 @@
       height: 1px;
       background: linear-gradient(90deg, transparent, rgba(0, 242, 254, 0.7), rgba(121, 40, 202, 0.7), transparent);
     }
+
+    /* ── WebGL Image Generation FX Container ── */
+    .img-fx-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #030712;
+    }
+    .img-fx-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 2;
+      transition: opacity 0.5s ease-out;
+    }
+    .img-fx-fallback-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+    }
+    .fx-tag {
+      position: absolute;
+      top: 0.6rem;
+      right: 0.6rem;
+      z-index: 10;
+      font-size: 9px;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 2px 7px;
+      border-radius: 9999px;
+      background: rgba(3, 7, 18, 0.85);
+      border: 1px solid rgba(0, 242, 254, 0.4);
+      color: #00f2fe;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 0 10px rgba(0, 242, 254, 0.25);
+      letter-spacing: 0.05em;
+    }
+    .fx-retrigger-btn {
+      position: absolute;
+      bottom: 0.6rem;
+      right: 0.6rem;
+      z-index: 10;
+      background: rgba(3, 7, 18, 0.85);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      color: #a5b4fc;
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-size: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      backdrop-filter: blur(8px);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      opacity: 0;
+    }
+    .cinematic-card:hover .fx-retrigger-btn {
+      opacity: 1;
+    }
+    .fx-retrigger-btn:hover {
+      background: rgba(15, 23, 54, 0.95);
+      border-color: #00f2fe;
+      color: #00f2fe;
+      box-shadow: 0 0 12px rgba(0, 242, 254, 0.3);
+      transform: scale(1.05);
+    }
   </style>
 </head>
 
@@ -578,9 +652,20 @@
               <p class="text-xs text-slate-400">High-Fidelity AI Illustrative Frames</p>
             </div>
           </div>
-          <span id="gallery-count" class="text-xs font-mono font-bold px-3 py-1 rounded-full bg-cosmos-900 border border-indigo-500/30 text-cyan-400 shadow-sm">
-            0 frames ready
-          </span>
+          <div class="flex items-center gap-3">
+            <!-- Shader Preset Selector (img-fx) -->
+            <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cosmos-900 border border-indigo-500/30 text-xs">
+              <span class="text-[10px] uppercase font-mono text-cyan-400 font-semibold tracking-wider">FX:</span>
+              <select id="fx-preset-select" class="bg-transparent text-slate-200 text-xs font-mono font-medium focus:outline-none cursor-pointer">
+                <option value="pixels-organic" class="bg-cosmos-950 text-cyan-300" selected>pixels-organic</option>
+                <option value="pixels-mechanic" class="bg-cosmos-950 text-indigo-300">pixels-mechanic</option>
+                <option value="sweep-gradient" class="bg-cosmos-950 text-fuchsia-300">sweep-gradient</option>
+              </select>
+            </div>
+            <span id="gallery-count" class="text-xs font-mono font-bold px-3 py-1 rounded-full bg-cosmos-900 border border-indigo-500/30 text-cyan-400 shadow-sm">
+              0 frames ready
+            </span>
+          </div>
         </div>
 
         <!-- Empty Gallery Visual State -->
@@ -610,6 +695,48 @@
     </section>
 
   </main>
+
+  <!-- ════════════════════════════════════════════
+       CINEMA LIGHTBOX & SHADER REVEAL MODAL
+  ════════════════════════════════════════════ -->
+  <div id="cinema-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-cosmos-950/85 backdrop-blur-xl transition-all duration-300">
+    <div class="relative w-full max-w-4xl bg-cosmos-900 border border-indigo-500/30 rounded-2xl overflow-hidden shadow-[0_0_60px_rgba(0,242,254,0.25)] flex flex-col">
+      <!-- Modal Header -->
+      <div class="px-5 py-3.5 border-b border-white/[0.08] flex items-center justify-between bg-cosmos-950/70">
+        <div class="flex items-center gap-2.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></span>
+          <h3 id="modal-title" class="text-sm font-bold text-slate-100 font-mono tracking-wide">FRAME INSPECTION</h3>
+        </div>
+        <div class="flex items-center gap-3">
+          <button onclick="retriggerModalShader()" class="btn-subtle text-xs px-3 py-1 rounded-lg text-cyan-300 border border-cyan-500/30 flex items-center gap-1.5 hover:bg-cyan-950/40">
+            <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/>
+            </svg>
+            <span>Re-Dissolve Shader</span>
+          </button>
+          <button onclick="closeCinemaModal()" class="btn-subtle p-1.5 rounded-lg text-slate-400 hover:text-white">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <!-- Modal Visual Body -->
+      <div id="modal-canvas-host" class="relative w-full aspect-video bg-cosmos-950 flex items-center justify-center overflow-hidden">
+        <!-- Canvas/Image inserted dynamically -->
+      </div>
+      <!-- Modal Footer -->
+      <div class="p-4 bg-cosmos-950/80 border-t border-white/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <p id="modal-prompt" class="text-xs text-slate-300 leading-relaxed max-w-xl"></p>
+        <a id="modal-raw-link" href="#" target="_blank" class="btn-quantum-action text-xs px-3.5 py-1.5 rounded-lg font-bold text-cosmos-950 flex items-center gap-1.5 self-end sm:self-auto">
+          <span>Download Master</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
 
   <!-- ════════════════════════════════════════════
        TOAST SYSTEM
@@ -1037,6 +1164,348 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
       }
     }
 
+    // ── WebGL Image Generation Shader (Libraries.dev img-fx Effect) ───────────
+    // Supports presets: "pixels-organic" | "pixels-mechanic" | "sweep-gradient"
+    const SHADER_PRESETS = {
+      'pixels-organic': {
+        name: 'Organic Pixels',
+        fragmentShader: `
+          precision highp float;
+          uniform sampler2D u_image;
+          uniform float u_progress;
+          uniform float u_time;
+          uniform vec2 u_resolution;
+          varying vec2 v_uv;
+
+          float hash(vec2 p) {
+            p = fract(p * vec2(123.34, 456.21));
+            p += dot(p, p + 45.32);
+            return fract(p.x * p.y);
+          }
+
+          float noise(vec2 st) {
+            vec2 i = floor(st);
+            vec2 f = fract(st);
+            float a = hash(i);
+            float b = hash(i + vec2(1.0, 0.0));
+            float c = hash(i + vec2(0.0, 1.0));
+            float d = hash(i + vec2(1.0, 1.0));
+            vec2 u = f * f * (3.0 - 2.0 * f);
+            return mix(a, b, u.x) + (c - a)* u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+          }
+
+          void main() {
+            vec2 uv = v_uv;
+            float p = clamp(u_progress, 0.0, 1.0);
+
+            float pixelSize = mix(55.0, 1.0, pow(p, 2.2));
+            vec2 gridCoord = floor(uv * (u_resolution / pixelSize)) / (u_resolution / pixelSize);
+
+            float n = noise(gridCoord * 8.0 + u_time * 0.85);
+            float thresh = smoothstep(n - 0.25, n + 0.25, p * 1.5 - 0.25);
+
+            vec2 sampleUv = mix(gridCoord, uv, clamp(thresh * 1.5, 0.0, 1.0));
+            vec4 imgColor = texture2D(u_image, sampleUv);
+
+            vec3 neonColor = mix(vec3(0.0, 0.95, 0.99), vec3(0.47, 0.16, 0.79), hash(gridCoord + floor(u_time * 6.0)));
+            float glitchLine = step(0.97, sin(uv.y * 120.0 + u_time * 12.0));
+
+            vec3 blended = mix(imgColor.rgb * (1.0 + glitchLine * 0.25), neonColor, (1.0 - p) * 0.35 * (1.0 - thresh));
+            blended += (1.0 - p) * (1.0 - thresh) * neonColor * 0.45;
+
+            gl_FragColor = vec4(blended, 1.0);
+          }
+        `
+      },
+      'pixels-mechanic': {
+        name: 'Mechanic Pixels',
+        fragmentShader: `
+          precision highp float;
+          uniform sampler2D u_image;
+          uniform float u_progress;
+          uniform float u_time;
+          uniform vec2 u_resolution;
+          varying vec2 v_uv;
+
+          float hash(vec2 p) {
+            return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+          }
+
+          void main() {
+            vec2 uv = v_uv;
+            float p = clamp(u_progress, 0.0, 1.0);
+
+            float blockSize = mix(40.0, 1.0, pow(p, 1.8));
+            vec2 blockUv = floor(uv * (u_resolution / blockSize)) / (u_resolution / blockSize);
+
+            float randVal = hash(blockUv);
+            float blockActive = step(randVal, p * 1.25);
+
+            vec2 sampleUv = mix(blockUv, uv, blockActive);
+            vec4 col = texture2D(u_image, sampleUv);
+
+            float scanline = sin(uv.y * 300.0 + u_time * 20.0) * 0.08 * (1.0 - p);
+            vec3 techGlow = vec3(0.03, 0.83, 0.67) * (1.0 - blockActive) * 0.6;
+
+            gl_FragColor = vec4(col.rgb + scanline + techGlow, 1.0);
+          }
+        `
+      },
+      'sweep-gradient': {
+        name: 'Sweep Gradient',
+        fragmentShader: `
+          precision highp float;
+          uniform sampler2D u_image;
+          uniform float u_progress;
+          uniform float u_time;
+          uniform vec2 u_resolution;
+          varying vec2 v_uv;
+
+          void main() {
+            vec2 uv = v_uv;
+            float p = clamp(u_progress, 0.0, 1.0);
+
+            float sweep = uv.x * 0.7 + uv.y * 0.3;
+            float sweepPos = p * 1.4 - 0.2;
+            float diff = sweep - sweepPos;
+
+            float edge = smoothstep(0.08, 0.0, abs(diff));
+            float revealed = step(diff, 0.0);
+
+            vec4 col = texture2D(u_image, uv);
+            vec3 beamColor = mix(vec3(0.0, 0.95, 1.0), vec3(0.85, 0.27, 0.94), uv.x);
+
+            vec3 finalColor = mix(col.rgb * 0.2, col.rgb, revealed);
+            finalColor += edge * beamColor * 1.5;
+
+            gl_FragColor = vec4(finalColor, 1.0);
+          }
+        `
+      }
+    };
+
+    const COMMON_VERTEX_SHADER = `
+      varying vec2 v_uv;
+      void main() {
+        v_uv = uv;
+        gl_Position = vec4(position, 1.0);
+      }
+    `;
+
+    const activeFxInstances = new Map();
+
+    /**
+     * Mounts WebGL ImageGeneration pixel-mosaic shader effect onto container
+     */
+    function mountImageGenerationFx(container, imageUrl, presetKey = 'pixels-organic', autoReveal = true, onComplete = null) {
+      if (typeof THREE === 'undefined') {
+        container.innerHTML = `<img src="${imageUrl}" class="img-fx-fallback-img" alt="Scene" />`;
+        return null;
+      }
+
+      const existingId = container.dataset.fxId;
+      if (existingId && activeFxInstances.has(existingId)) {
+        activeFxInstances.get(existingId).destroy();
+      }
+
+      const instanceId = 'fx-' + Math.random().toString(36).substring(2, 9);
+      container.dataset.fxId = instanceId;
+
+      const preset = SHADER_PRESETS[presetKey] || SHADER_PRESETS['pixels-organic'];
+      const width = container.clientWidth || 400;
+      const height = container.clientHeight || 225;
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+      let renderer;
+      try {
+        renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false, powerPreference: 'high-performance' });
+        renderer.setSize(width, height);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      } catch (err) {
+        container.innerHTML = `<img src="${imageUrl}" class="img-fx-fallback-img" alt="Scene" />`;
+        return null;
+      }
+
+      const canvas = renderer.domElement;
+      canvas.className = 'img-fx-canvas';
+      container.appendChild(canvas);
+
+      const textureLoader = new THREE.TextureLoader();
+      textureLoader.setCrossOrigin('anonymous');
+
+      let material = null;
+      let mesh = null;
+      let animFrameId = null;
+      let startTime = performance.now();
+      let progress = 0;
+      const duration = 2200;
+
+      textureLoader.load(
+        imageUrl,
+        (texture) => {
+          texture.minFilter = THREE.LinearFilter;
+          texture.magFilter = THREE.LinearFilter;
+          texture.generateMipmaps = false;
+
+          material = new THREE.ShaderMaterial({
+            vertexShader: COMMON_VERTEX_SHADER,
+            fragmentShader: preset.fragmentShader,
+            uniforms: {
+              u_image: { value: texture },
+              u_progress: { value: 0.0 },
+              u_time: { value: 0.0 },
+              u_resolution: { value: new THREE.Vector2(width, height) }
+            },
+            depthTest: false,
+            depthWrite: false
+          });
+
+          mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
+          scene.add(mesh);
+
+          function animate(now) {
+            animFrameId = requestAnimationFrame(animate);
+            const elapsed = now - startTime;
+            material.uniforms.u_time.value = elapsed * 0.001;
+
+            if (autoReveal) {
+              progress = Math.min(elapsed / duration, 1.0);
+              material.uniforms.u_progress.value = progress;
+
+              if (progress >= 1.0) {
+                cancelAnimationFrame(animFrameId);
+                animFrameId = null;
+                if (onComplete) onComplete();
+              }
+            } else {
+              material.uniforms.u_progress.value = 1.0;
+            }
+
+            renderer.render(scene, camera);
+          }
+
+          animFrameId = requestAnimationFrame(animate);
+        },
+        undefined,
+        (err) => {
+          container.innerHTML = `<img src="${imageUrl}" class="img-fx-fallback-img" alt="Scene" />`;
+        }
+      );
+
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (let entry of entries) {
+          const cr = entry.contentRect;
+          if (cr.width > 0 && cr.height > 0) {
+            renderer.setSize(cr.width, cr.height);
+            if (material && material.uniforms.u_resolution) {
+              material.uniforms.u_resolution.value.set(cr.width, cr.height);
+            }
+          }
+        }
+      });
+      resizeObserver.observe(container);
+
+      const controller = {
+        retrigger: (customPresetKey = null) => {
+          if (customPresetKey && SHADER_PRESETS[customPresetKey] && material) {
+            material.fragmentShader = SHADER_PRESETS[customPresetKey].fragmentShader;
+            material.needsUpdate = true;
+          }
+          startTime = performance.now();
+          progress = 0;
+          if (material) material.uniforms.u_progress.value = 0.0;
+          if (!animFrameId) {
+            const loop = (now) => {
+              animFrameId = requestAnimationFrame(loop);
+              const elapsed = now - startTime;
+              if (material) {
+                material.uniforms.u_time.value = elapsed * 0.001;
+                progress = Math.min(elapsed / duration, 1.0);
+                material.uniforms.u_progress.value = progress;
+              }
+              renderer.render(scene, camera);
+              if (progress >= 1.0) {
+                cancelAnimationFrame(animFrameId);
+                animFrameId = null;
+                if (onComplete) onComplete();
+              }
+            };
+            animFrameId = requestAnimationFrame(loop);
+          }
+        },
+        destroy: () => {
+          if (animFrameId) cancelAnimationFrame(animFrameId);
+          resizeObserver.disconnect();
+          if (mesh) {
+            mesh.geometry.dispose();
+            if (mesh.material) mesh.material.dispose();
+          }
+          if (renderer) {
+            renderer.dispose();
+            if (canvas.parentElement) canvas.remove();
+          }
+          activeFxInstances.delete(instanceId);
+        }
+      };
+
+      activeFxInstances.set(instanceId, controller);
+      return controller;
+    }
+
+    // Retrigger FX for a specific scene card
+    window.retriggerCardFx = function(sceneId) {
+      const container = document.getElementById(`fx-host-${sceneId}`);
+      if (container && container.dataset.fxId && activeFxInstances.has(container.dataset.fxId)) {
+        const selectedPreset = document.getElementById('fx-preset-select')?.value || 'pixels-organic';
+        activeFxInstances.get(container.dataset.fxId).retrigger(selectedPreset);
+      }
+    };
+
+    // Cinema Lightbox Modal Logic
+    let currentModalScene = null;
+    let modalFxController = null;
+
+    window.openCinemaModal = function(sceneId, fullUrl, promptText) {
+      currentModalScene = { sceneId, fullUrl, promptText };
+      const modal = document.getElementById('cinema-modal');
+      const title = document.getElementById('modal-title');
+      const promptEl = document.getElementById('modal-prompt');
+      const rawLink = document.getElementById('modal-raw-link');
+      const host = document.getElementById('modal-canvas-host');
+
+      title.textContent = `CINEMATIC FRAME #${sceneId} — NEURAL MASTER INSPECTOR`;
+      promptEl.textContent = promptText;
+      rawLink.href = fullUrl;
+
+      host.innerHTML = '';
+      modal.classList.remove('hidden');
+
+      const selectedPreset = document.getElementById('fx-preset-select')?.value || 'pixels-organic';
+      modalFxController = mountImageGenerationFx(host, fullUrl, selectedPreset, true);
+    };
+
+    window.closeCinemaModal = function() {
+      const modal = document.getElementById('cinema-modal');
+      modal.classList.add('hidden');
+      if (modalFxController) {
+        modalFxController.destroy();
+        modalFxController = null;
+      }
+    };
+
+    window.retriggerModalShader = function() {
+      if (modalFxController) {
+        const selectedPreset = document.getElementById('fx-preset-select')?.value || 'pixels-organic';
+        modalFxController.retrigger(selectedPreset);
+      }
+    };
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeCinemaModal();
+    });
+
     // Cinematic Gallery Card
     function addImageCard(sceneId, imageUrl, promptText) {
       galleryEmpty.classList.add('hidden');
@@ -1045,6 +1514,8 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
       const shortPrompt = promptText.replace(/^Cinematic story illustration, scene \d+:\s*/i, '');
       const fullUrl = imageUrl.startsWith('http') ? imageUrl : `${API_BASE}${imageUrl}`;
       const isError = imageUrl.includes('error_scene');
+
+      const activePreset = document.getElementById('fx-preset-select')?.value || 'pixels-organic';
 
       const card = document.createElement('div');
       card.className = 'cinematic-card overflow-hidden flex flex-col group';
@@ -1058,22 +1529,35 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
                  </svg>
                  <p class="text-xs text-red-300 font-medium">Generation Error</p>
                </div>`
-            : `<img src="${fullUrl}" alt="Scene ${sceneId}"
-                    class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                    onerror="this.parentElement.innerHTML='<div class=\\'w-full h-full flex items-center justify-center\\'><p class=\\'text-xs text-slate-500\\'>Image rendering in progress...</p></div>'" />
-               <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
-               <div class="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+            : `<!-- WebGL Shader FX Host -->
+               <div id="fx-host-${sceneId}" class="img-fx-container cursor-pointer" onclick="openCinemaModal(${sceneId}, '${fullUrl}', '${escapeHtml(shortPrompt)}')">
+               </div>
+               <div class="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/85 via-black/10 to-transparent z-10"></div>
+               <div class="absolute top-2.5 left-2.5 z-20 flex items-center gap-1.5 pointer-events-none">
                  <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-cosmos-950/80 text-cyan-300 border border-cyan-400/40 backdrop-blur-md shadow-lg">
                    FRAME #${sceneId}
                  </span>
-               </div>`
+               </div>
+               <span class="fx-tag pointer-events-none">WebGL FX</span>
+               <button onclick="event.stopPropagation(); retriggerCardFx(${sceneId})" class="fx-retrigger-btn" title="Re-run Shader Reveal">
+                 <svg class="w-3 h-3 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/>
+                 </svg>
+                 <span>Re-Dissolve</span>
+               </button>`
           }
         </div>
         <div class="p-3.5 flex flex-col justify-between flex-1">
           <p class="text-xs text-slate-300 leading-relaxed line-clamp-2 font-normal">${escapeHtml(shortPrompt.slice(0, 140))}${shortPrompt.length > 140 ? '…' : ''}</p>
           ${!isError ? `
           <div class="mt-3 pt-2.5 border-t border-white/[0.06] flex items-center justify-between">
-            <span class="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Cinematic Frame</span>
+            <button onclick="openCinemaModal(${sceneId}, '${fullUrl}', '${escapeHtml(shortPrompt)}')"
+                    class="text-[10px] font-mono text-cyan-400 hover:text-cyan-200 uppercase tracking-wider flex items-center gap-1 transition-colors">
+              <svg class="w-3 h-3 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607ZM10.5 7.5v6m3-3h-6"/>
+              </svg>
+              <span>Inspect Cinema</span>
+            </button>
             <a href="${fullUrl}" target="_blank"
                class="inline-flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-200 transition-colors font-semibold">
               <span>Inspect Raw</span>
@@ -1085,6 +1569,15 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
         </div>`;
 
       galleryGrid.insertBefore(card, galleryGrid.firstChild);
+
+      if (!isError) {
+        requestAnimationFrame(() => {
+          const hostEl = document.getElementById(`fx-host-${sceneId}`);
+          if (hostEl) {
+            mountImageGenerationFx(hostEl, fullUrl, activePreset, true);
+          }
+        });
+      }
     }
 
     // Helpers
