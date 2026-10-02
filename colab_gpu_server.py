@@ -235,6 +235,8 @@ def generate():
         return send_file(buf, mimetype="image/png")
 
     except Exception as exc:
+        import traceback
+        traceback.print_exc()
         print(f"[ERR] Generation error: {exc}")
         return jsonify({"error": str(exc)}), 500
 
