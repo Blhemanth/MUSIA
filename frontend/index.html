@@ -1045,6 +1045,8 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
     }
 
     // Pipeline Initiation
+    let isGenerationCancelled = false;
+
     async function startGeneration() {
       if (parsedScenes.length === 0) {
         showToast('Analyze and dissect scenes before generating.', 'warning');
@@ -1056,46 +1058,81 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
       const isMock        = selectedModel === 'mock';
       const modelLabel    = isMock ? 'Instant Mock' : (isQuantum ? 'Quantum SDXL' : 'Standard SDXL');
 
+      isGenerationCancelled = false;
       btnStart.disabled    = true;
       btnStop.disabled     = false;
       modelSelect.disabled = true;
       setGlobalPill('running');
       statusDetail.classList.remove('hidden');
 
-      statusSceneText.textContent = `Synthesizing Scene 1 of ${parsedScenes.length}`;
-      statusSubtext.textContent = isMock 
-        ? 'Generating instant procedural previews...' 
-        : `Transmitting latent request to Google Colab GPU tunnel (${modelLabel})...`;
+      renderedImageSet.clear();
+      galleryGrid.innerHTML = '';
+      galleryEmpty.classList.add('hidden');
+      galleryGrid.classList.remove('hidden');
 
-      try {
-        const res = await fetch(`${API_BASE}/api/start-generation`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model: selectedModel }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || 'Could not initiate generation pipeline.');
+      const total = parsedScenes.length;
+      showToast(`Initiating scene generation with Colab GPU (${modelLabel})...`, 'info');
 
-        showToast(`${modelLabel} pipeline dispatched!`, 'success');
-        startPolling();
-      } catch (err) {
-        showToast(`Error: ${err.message}`, 'error');
-        btnStart.disabled    = false;
-        btnStop.disabled     = true;
-        modelSelect.disabled = false;
-        setGlobalPill('error');
-        statusDetail.classList.add('hidden');
+      for (let i = 0; i < total; i++) {
+        if (isGenerationCancelled) {
+          showToast('Generation cancelled.', 'warning');
+          break;
+        }
+
+        const sceneId = i + 1;
+        const prompt = parsedScenes[i];
+
+        statusSceneText.textContent = `Synthesizing Scene ${sceneId} of ${total}`;
+        statusSubtext.textContent = isMock 
+          ? 'Rendering procedural preview...' 
+          : `Transmitting latent request to Google Colab GPU tunnel (${modelLabel})...`;
+        statusText.textContent = `Generating Scene ${sceneId} / ${total}...`;
+        progressFill.style.width = `${Math.round(((sceneId - 1) / total) * 100)}%`;
+        progressFrac.textContent = `${sceneId - 1} / ${total}`;
+
+        try {
+          const res = await fetch(`${API_BASE}/api/generate-scene`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              scene_prompt: prompt,
+              scene_id: sceneId,
+              model: selectedModel
+            })
+          });
+
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.detail || `Server returned HTTP ${res.status}`);
+          }
+
+          const data = await res.json();
+          addImageCard(sceneId, data.image_url, prompt);
+          progressFill.style.width = `${Math.round((sceneId / total) * 100)}%`;
+          progressFrac.textContent = `${sceneId} / ${total}`;
+          galleryCount.textContent = `${sceneId} frame${sceneId !== 1 ? 's' : ''} ready`;
+          showToast(`Scene ${sceneId} rendered & displayed successfully!`, 'success');
+        } catch (err) {
+          console.error(`Scene ${sceneId} error:`, err);
+          showToast(`Scene ${sceneId} error: ${err.message}`, 'error');
+          addImageCard(sceneId, `/static/generated_scenes/error_scene_${sceneId}.png`, prompt);
+        }
       }
+
+      btnStart.disabled    = false;
+      btnStop.disabled     = true;
+      modelSelect.disabled = false;
+      statusDetail.classList.add('hidden');
+      setGlobalPill('done');
+      statusText.textContent = `Directorial master render complete: ${total} frames!`;
+      showToast('All storyboard frames generated!', 'success');
     }
 
     // Pipeline Stop
     async function stopGeneration() {
-      try {
-        await fetch(`${API_BASE}/api/stop-generation`, { method: 'POST' });
-        showToast('Stop instruction transmitted — halting at scene boundary.', 'warning');
-      } catch (err) {
-        showToast(`Stop failed: ${err.message}`, 'error');
-      }
+      isGenerationCancelled = true;
+      showToast('Halting generation...', 'warning');
+      btnStop.disabled = true;
     }
 
     // Polling System

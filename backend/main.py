@@ -120,6 +120,13 @@ class GenerationRequest(BaseModel):
         return v
 
 
+class SingleSceneRequest(BaseModel):
+    """Body for /api/generate-scene."""
+    scene_prompt: str
+    scene_id: int = 1
+    model: str = "quantum"
+
+
 # ---------------------------------------------------------------------------
 # Background generation pipeline
 # ---------------------------------------------------------------------------
@@ -370,3 +377,27 @@ async def stop_generation():
         "status": "stopping",
         "message": "Stop signal sent. The pipeline will halt after the current scene completes.",
     }
+
+
+@app.post("/api/generate-scene", summary="Directly generate a single scene illustration")
+async def generate_single_scene(request: SingleSceneRequest):
+    """
+    Directly renders a single scene illustration through the Colab GPU tunnel
+    or high-fidelity local fallback, returning the image data URL directly.
+    Ideal for serverless (Vercel) environments to avoid background task freeze.
+    """
+    use_quantum = request.model == "quantum"
+    is_mock = request.model == "mock"
+    try:
+        if is_mock:
+            image_url = await asyncio.to_thread(
+                generate_mock_scene_image, request.scene_prompt, request.scene_id
+            )
+        else:
+            image_url = await asyncio.to_thread(
+                generate_scene_image, request.scene_prompt, request.scene_id, use_quantum
+            )
+        return {"status": "success", "scene_id": request.scene_id, "image_url": image_url}
+    except Exception as exc:
+        print(f"[ERR] Error generating scene {request.scene_id}: {exc}")
+        raise HTTPException(status_code=500, detail=str(exc))
