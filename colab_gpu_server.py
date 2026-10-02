@@ -89,21 +89,30 @@ class QuantumFeatureEnhancer(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         orig_device = x.device
-        residual = x
-        normed = self.norm(x)
+        orig_dtype = x.dtype
+        enhancer_device = next(self.norm.parameters()).device
+
+        # Convert to float32 on enhancer device for LayerNorm & Quantum circuit
+        x_f32 = x.to(device=enhancer_device, dtype=torch.float32)
+        residual = x_f32
+        normed = self.norm(x_f32)
         compressed = self.compress(normed)
 
         orig_shape = compressed.shape
         flat = compressed.view(-1, self.n_qubits)
+        ql_dev = next(self.quantum_layer.parameters()).device
 
-        # PennyLane default.qubit runs on CPU: transfer flat to CPU and output back to GPU
-        flat_cpu = flat.detach().cpu()
-        q_out = torch.stack([self.quantum_layer(flat_cpu[i]) for i in range(flat_cpu.shape[0])]).to(orig_device)
-        quantum_expectations = q_out.view(*orig_shape)
+        q_list = []
+        for i in range(flat.shape[0]):
+            tok_out = self.quantum_layer(flat[i].to(ql_dev))
+            q_list.append(tok_out.to(device=enhancer_device, dtype=torch.float32))
 
+        quantum_expectations = torch.stack(q_list).view(*orig_shape)
         expanded = self.expand(quantum_expectations)
         enhanced = residual + self.scale * expanded
-        return enhanced
+
+        # Return back in exact device and dtype expected by SDXL
+        return enhanced.to(device=orig_device, dtype=orig_dtype)
 
 
 # ------------------------------------------------------------------------------
