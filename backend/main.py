@@ -23,6 +23,8 @@ from .story_parser import (
 from .generate_on_colab import generate_scene_image, generate_mock_scene_image
 from .quantum_pipeline import weight_manager
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 # ---------------------------------------------------------------------------
 # App initialisation
 # ---------------------------------------------------------------------------
@@ -47,18 +49,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve generated images over HTTP
-app.mount(
-    "/static/generated_scenes",
-    StaticFiles(directory="backend/static/generated_scenes"),
-    name="generated_scenes",
-)
+# Ensure static directories exist and mount them reliably
+scenes_static_dir = os.path.join(BASE_DIR, "backend", "static", "generated_scenes")
+try:
+    os.makedirs(scenes_static_dir, exist_ok=True)
+except OSError:
+    pass
+
+if os.path.exists(scenes_static_dir):
+    app.mount(
+        "/static/generated_scenes",
+        StaticFiles(directory=scenes_static_dir),
+        name="generated_scenes",
+    )
 
 # Mount frontend directory for static assets
-if os.path.exists("frontend"):
+frontend_dir = os.path.join(BASE_DIR, "frontend")
+if os.path.exists(frontend_dir):
     app.mount(
         "/frontend",
-        StaticFiles(directory="frontend"),
+        StaticFiles(directory=frontend_dir),
         name="frontend",
     )
 
@@ -179,10 +189,10 @@ async def run_generation_pipeline(model_choice: str = "quantum") -> None:
 @app.get("/", summary="Serve MUSIA Frontend Dashboard")
 def serve_frontend():
     """Serve the frontend index.html dashboard at the root URL."""
-    frontend_index = os.path.join("frontend", "index.html")
+    frontend_index = os.path.join(BASE_DIR, "frontend", "index.html")
     if os.path.exists(frontend_index):
         return FileResponse(frontend_index)
-    return {"status": "success", "message": "MUSIA API v2 is up and running."}
+    return {"status": "success", "message": "MUSIA API v3 is up and running."}
 
 
 @app.get("/api/health", summary="Health check")

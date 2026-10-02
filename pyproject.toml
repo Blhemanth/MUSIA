@@ -1,0 +1,16 @@
+[project]
+name = "musia"
+version = "3.0.0"
+description = "Multilingual Story Illustration (MUSIA) - Quantum-Enhanced Neural Diffusion"
+requires-python = ">=3.9"
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn>=0.28.0",
+    "pydantic>=2.6.4",
+    "requests>=2.31.0",
+    "Pillow>=10.0.0",
+    "httpx>=0.27.0",
+]
+
+[tool.vercel]
+entrypoint = "backend.main:app"

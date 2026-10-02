@@ -46,7 +46,14 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PQC_WEIGHTS_PATH = os.path.join(BASE_DIR, "best_pqc_enhancer_fulldataset.pt")
 ADAPTER_WEIGHTS_PATH = os.path.join(BASE_DIR, "adapter_model.safetensors")
 OUTPUT_DIR = os.path.join(BASE_DIR, "backend", "static", "generated_scenes")
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+try:
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+except OSError:
+    OUTPUT_DIR = os.path.join("/tmp", "generated_scenes")
+    try:
+        os.makedirs(OUTPUT_DIR, exist_ok=True)
+    except OSError:
+        pass
 
 
 # ---------------------------------------------------------------------------
