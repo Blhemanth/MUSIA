@@ -124,7 +124,7 @@ if __name__ == "__main__":
     print("  MUSIA COLAB GPU BRIDGE IS READY")
     print("=" * 65)
     print(f"  Public Tunnel URL: {public_url}")
-    print("  Paste this URL into backend/generate_on_kaggle.py (line 25)")
+    print("  Paste this URL into backend/generate_on_colab.py (line 25)")
     print(f'  Example: COLAB_NGROK_URL = "{public_url}"')
     print("=" * 65 + "\n")
 

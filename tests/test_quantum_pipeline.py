@@ -16,7 +16,7 @@ from backend.quantum_pipeline import (
     render_multilingual_scene_illustration,
     OUTPUT_DIR,
 )
-from backend.generate_on_kaggle import generate_mock_scene_image
+from backend.generate_on_colab import generate_mock_scene_image
 
 
 class TestQuantumPipeline(unittest.TestCase):

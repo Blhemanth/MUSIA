@@ -20,7 +20,7 @@ Integrates:
 4. Dual Mode Execution:
    - Quantum-Enhanced SDXL (PQC modulated latent Hilbert space)
    - Standard SDXL (unmodulated text embeddings)
-   - Hybrid Remote Colab/Kaggle GPU bridge with high-fidelity local fallback
+   - Hybrid Remote Google Colab GPU bridge with high-fidelity local fallback
 """
 
 import os
@@ -234,7 +234,7 @@ def render_multilingual_scene_illustration(
 ) -> str:
     """
     Renders the sequential scene illustration.
-    1. First attempts remote generation if an active Google Colab / Kaggle tunnel is configured.
+    1. First attempts remote generation if an active Google Colab tunnel is configured.
     2. Falls back to generating a high-fidelity cinematic illustration locally that:
        - Uses trained PQC features & quantum expectation values
        - Renders accurate native typography in Hindi, Bengali, and English using Nirmala UI
@@ -243,21 +243,30 @@ def render_multilingual_scene_illustration(
     """
     import requests
 
+    clean_prompt = normalize_multilingual_text(scene_prompt)
+    prefix = f"Cinematic story illustration, scene {scene_id}:"
+    short_prompt = clean_prompt.replace(prefix, "").strip() if prefix in clean_prompt else clean_prompt.strip()
+
     # 1. Check if Colab ngrok tunnel is reachable
     if colab_url and not colab_url.startswith("https://your-"):
         try:
             url = f"{colab_url.rstrip('/')}/generate"
             payload = {
-                "prompt": scene_prompt,
+                "prompt": short_prompt,
                 "use_quantum": use_quantum,
                 "scene_id": scene_id
             }
-            resp = requests.post(url, json=payload, timeout=180)
-            if resp.status_code == 200:
+            headers = {
+                "ngrok-skip-browser-warning": "true",
+                "User-Agent": "MUSIA-Client/3.0",
+                "Accept": "image/png, image/*",
+            }
+            resp = requests.post(url, json=payload, headers=headers, timeout=180)
+            if resp.status_code == 200 and (resp.content.startswith(b"\x89PNG") or "image" in resp.headers.get("Content-Type", "")):
                 dest_path = os.path.join(OUTPUT_DIR, f"scene_{scene_id}.png")
                 with open(dest_path, "wb") as f:
                     f.write(resp.content)
-                print(f"[OK] Scene {scene_id} generated via Colab GPU!")
+                print(f"[OK] Scene {scene_id} generated via Colab GPU! ({len(resp.content)} bytes)")
                 return f"/static/generated_scenes/scene_{scene_id}.png"
             else:
                 print(f"[WARN] Colab endpoint returned HTTP {resp.status_code}: {resp.text[:200]}")

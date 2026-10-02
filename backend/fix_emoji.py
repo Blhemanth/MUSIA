@@ -15,7 +15,7 @@ EMOJI_MAP = {
 }
 
 FILES = [
-    "backend/generate_on_kaggle.py",
+    "backend/generate_on_colab.py",
     "backend/main.py",
     "backend/story_parser.py",
     "backend/quantum_pipeline.py",

@@ -8,10 +8,6 @@ Phase 2+: FastAPI Backend Server — Multilingual Processing (English, Hindi, Be
 import os
 import asyncio
 
-# Ensure Kaggle credentials path is configured before any kaggle imports
-if os.path.exists(r"B:\kaggle.json"):
-    os.environ["KAGGLE_CONFIG_DIR"] = os.path.dirname(os.path.abspath(r"B:\kaggle.json"))
-
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -24,7 +20,7 @@ from .story_parser import (
     detect_language,
     normalize_multilingual_text,
 )
-from .generate_on_kaggle import generate_scene_image, generate_mock_scene_image
+from .generate_on_colab import generate_scene_image, generate_mock_scene_image
 from .quantum_pipeline import weight_manager
 
 # ---------------------------------------------------------------------------
@@ -121,7 +117,7 @@ class GenerationRequest(BaseModel):
 async def run_generation_pipeline(model_choice: str = "quantum") -> None:
     """
     Async background coroutine that iterates through all parsed scenes,
-    calls the Kaggle GPU bridge for each one (via asyncio.to_thread so the
+    calls the Google Colab GPU bridge for each one (via asyncio.to_thread so the
     event loop stays unblocked), and accumulates image URLs in
     `generation_status`.
 
@@ -292,7 +288,7 @@ async def model_info():
     }
 
 
-@app.post("/api/start-generation", summary="Start Kaggle image generation")
+@app.post("/api/start-generation", summary="Start Colab image generation")
 async def start_generation(
     background_tasks: BackgroundTasks,
     request: GenerationRequest = GenerationRequest(),

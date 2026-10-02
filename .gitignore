@@ -24,7 +24,6 @@ wheels/
 *.egg
 
 # Secrets and environment configs
-kaggle.json
 *.env
 .env.*
 
@@ -34,7 +33,6 @@ backend/static/generated_scenes/*.jpg
 !backend/static/generated_scenes/.gitkeep
 
 # Temporary / test files
-backend/temp_kaggle_script.py
 backend/test_s.py
 test_utf8.txt
 

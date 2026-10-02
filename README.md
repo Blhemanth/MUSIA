@@ -25,7 +25,7 @@ Translating long-form prose and multilingual stories into cohesive visual storyb
 
 1. **Intelligent Narrative Dissection Engine**: Automatically parses complex text, novels, or scripts into distinct cinematic scene cues using chapter identification, sentence chunking, and context enrichment.
 2. **Quantum Feature Enhancement (PQC)**: Modulates latent prompt embeddings across simulated multi-qubit PennyLane quantum circuits to optimize text representation in high-dimensional Hilbert space before passing to the latent diffusion pipeline.
-3. **Decoupled Cloud GPU Pipeline**: Supports hybrid execution across **Google Colab / Kaggle cloud GPU tunnels** via ngrok, with an ultra-fast local mock mode for instant frontend prototyping.
+3. **Decoupled Cloud GPU Pipeline**: Supports hybrid execution across **Google Colab cloud GPU tunnels** via ngrok, with an ultra-fast local mock mode for instant frontend prototyping.
 4. **Director's "Quantum Studio" UI**: An immersive, glassmorphic dark-mode web application featuring real-time quantum particle simulation, live storyboard timeline tracking, and 16:9 cinematic render galleries.
 
 ---
@@ -66,7 +66,7 @@ flowchart TD
         J[GET /api/generation-status] -.->|Polling Loop| F
     end
 
-    subgraph GPU ["☁️ Cloud GPU Execution (Google Colab / Kaggle)"]
+    subgraph GPU ["☁️ Cloud GPU Execution (Google Colab)"]
         I -->|POST /generate via ngrok| K[PennyLane Quantum Circuit]
         K -->|Quantum Modulated Embeddings| L[Stable Diffusion XL Engine]
         L -->|Rendered PNG Frames| I
@@ -139,7 +139,7 @@ python -m unittest discover -s tests -p "test_*.py"
    tunnel = ngrok.connect(5000)
    print(f"Public Tunnel URL: {tunnel.public_url}")
    ```
-4. Copy the generated ngrok URL and update `COLAB_NGROK_URL` inside `backend/generate_on_kaggle.py`:
+4. Copy the generated ngrok URL and update `COLAB_NGROK_URL` inside `backend/generate_on_colab.py`:
    ```python
    COLAB_NGROK_URL = "https://your-active-ngrok-tunnel.ngrok-free.dev"
    ```
@@ -156,11 +156,14 @@ Main_musia_project/
 ├── backend/
 │   ├── main.py                     # FastAPI application & async task controller
 │   ├── story_parser.py             # Intelligent chapter/scene segmentation logic
-│   ├── generate_on_kaggle.py       # Cloud GPU tunnel client & local procedural fallback
+│   ├── generate_on_colab.py        # Google Colab GPU tunnel client & local procedural fallback
+│   ├── quantum_pipeline.py         # 4-qubit PQC enhancer & weight integration
 │   └── static/
 │       └── generated_scenes/       # Rendered storyboard PNG frames
+├── colab_gpu_server.py             # Standalone Google Colab GPU bridge server script
 ├── frontend/
 │   └── index.html                  # Quantum Studio single-page application
+├── tests/                          # Automated unit & integration test suite (25 tests)
 ├── best_pqc_enhancer_fulldataset.pt # Pretrained Parameterized Quantum Circuit weights
 ├── adapter_model.safetensors       # LoRA / diffusion adapter weights
 ├── requirements.txt                # Python environment specifications
