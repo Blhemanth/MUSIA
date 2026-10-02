@@ -132,8 +132,14 @@ pipe = StableDiffusionXLPipeline.from_pretrained(
 pipe = pipe.to(DEVICE)
 
 if DEVICE == "cuda":
-    pipe.enable_attention_slicing()
-    pipe.enable_vae_tiling()
+    try:
+        pipe.enable_attention_slicing()
+    except Exception:
+        pass
+    try:
+        pipe.vae.enable_tiling()
+    except Exception:
+        pass
 
 # Load LoRA Adapter from Google Drive
 if os.path.exists(LORA_PATH):
