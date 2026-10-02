@@ -319,15 +319,24 @@ def render_multilingual_scene_illustration(
             }
             resp = requests.post(url, json=payload, headers=headers, timeout=180)
             if resp.status_code == 200 and (resp.content.startswith(b"\x89PNG") or "image" in resp.headers.get("Content-Type", "")):
-                dest_path = os.path.join(OUTPUT_DIR, f"scene_{scene_id}.png")
-                with open(dest_path, "wb") as f:
-                    f.write(resp.content)
+                import base64
+                b64_data = base64.b64encode(resp.content).decode("utf-8")
+                data_url = f"data:image/png;base64,{b64_data}"
+
+                # Try saving locally if directory is writable (e.g. local environment)
+                try:
+                    dest_path = os.path.join(OUTPUT_DIR, f"scene_{scene_id}.png")
+                    with open(dest_path, "wb") as f:
+                        f.write(resp.content)
+                except Exception:
+                    pass
+
                 print(f"[OK] Scene {scene_id} generated via Colab GPU! ({len(resp.content)} bytes)")
-                return f"/static/generated_scenes/scene_{scene_id}.png"
+                return data_url
             else:
                 print(f"[WARN] Colab endpoint returned HTTP {resp.status_code}: {resp.text[:200]}")
         except Exception as e:
-            print(f"[INFO] Remote GPU tunnel not responding ({e}) - rendering via local Quantum pipeline.")
+            print(f"[INFO] Remote GPU tunnel error ({e}) - attempting local illustration fallback.")
 
     # 2. Local High-Fidelity Generation using trained PQC features
     from PIL import Image, ImageDraw, ImageFont
@@ -444,10 +453,22 @@ def render_multilingual_scene_illustration(
         q_label = f"PQC Qubits [q0..q3]: " + "  ".join([f"q{i}:{val:+.2f}" for i, val in enumerate(q_vals)])
         draw.text((32, y_text + 6), q_label, fill=(130, 210, 240), font=font_small)
 
-    # Save to static output directory
-    dest_filename = f"scene_{scene_id}.png"
-    dest_path = os.path.join(OUTPUT_DIR, dest_filename)
-    img.save(dest_path, "PNG", quality=95)
-    print(f"[SCENE] Sequential Scene {scene_id} illustration saved successfully -> {dest_path}")
+    # Encode image as base64 data URI for instant zero-dependency display
+    import io
+    import base64
+    buf = io.BytesIO()
+    img.save(buf, format="PNG", quality=95)
+    b64_data = base64.b64encode(buf.getvalue()).decode("utf-8")
+    data_url = f"data:image/png;base64,{b64_data}"
 
-    return f"/static/generated_scenes/{dest_filename}"
+    # Try saving locally if directory is writable
+    try:
+        dest_filename = f"scene_{scene_id}.png"
+        dest_path = os.path.join(OUTPUT_DIR, dest_filename)
+        with open(dest_path, "wb") as f:
+            f.write(buf.getvalue())
+        print(f"[SCENE] Sequential Scene {scene_id} illustration saved to disk -> {dest_path}")
+    except Exception:
+        pass
+
+    return data_url

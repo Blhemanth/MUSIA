@@ -1478,6 +1478,11 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
       title.textContent = `CINEMATIC FRAME #${sceneId} — NEURAL MASTER INSPECTOR`;
       promptEl.textContent = promptText;
       rawLink.href = fullUrl;
+      if (fullUrl.startsWith('data:')) {
+        rawLink.setAttribute('download', `musia_scene_${sceneId}.png`);
+      } else {
+        rawLink.removeAttribute('download');
+      }
 
       host.innerHTML = `<img src="${fullUrl}" alt="Frame #${sceneId}" class="w-full h-full object-contain max-h-[70vh] rounded-lg shadow-2xl transition-all" />`;
       modal.classList.remove('hidden');
@@ -1510,7 +1515,7 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
       galleryGrid.classList.remove('hidden');
 
       const shortPrompt = promptText.replace(/^Cinematic story illustration, scene \d+:\s*/i, '');
-      const fullUrl = imageUrl.startsWith('http') ? imageUrl : `${API_BASE}${imageUrl}`;
+      const fullUrl = (imageUrl.startsWith('http') || imageUrl.startsWith('data:')) ? imageUrl : `${API_BASE}${imageUrl}`;
       const isError = imageUrl.includes('error_scene');
 
       const card = document.createElement('div');
@@ -1550,7 +1555,7 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
               </svg>
               <span>Inspect Cinema</span>
             </button>
-            <a href="${fullUrl}" target="_blank"
+            <a href="${fullUrl}" ${fullUrl.startsWith('data:') ? `download="musia_scene_${sceneId}.png"` : 'target="_blank"'}
                class="inline-flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-200 transition-colors font-semibold">
               <span>Inspect Raw</span>
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
