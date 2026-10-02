@@ -267,7 +267,13 @@ if __name__ == "__main__":
     if NGROK_AUTH_TOKEN and NGROK_AUTH_TOKEN != "YOUR_NGROK_AUTHTOKEN_HERE":
         ngrok.set_auth_token(NGROK_AUTH_TOKEN)
 
-    # Launch ngrok tunnel
+    # Clean up any previous dangling ngrok sessions to avoid "Listener closed"
+    try:
+        ngrok.kill()
+    except Exception:
+        pass
+
+    # Launch fresh ngrok tunnel
     tunnel = ngrok.connect(PORT)
     public_url = tunnel.public_url
 
@@ -275,8 +281,6 @@ if __name__ == "__main__":
     print("  🚀 MUSIA GOOGLE COLAB GPU BRIDGE ONLINE")
     print("=" * 65)
     print(f"  Public Tunnel URL: {public_url}")
-    print(f"  Copy this URL to backend/generate_on_colab.py (line 25)")
-    print(f'  Example: COLAB_NGROK_URL = "{public_url}"')
     print("=" * 65 + "\n")
 
-    app.run(host="0.0.0.0", port=PORT)
+    app.run(host="0.0.0.0", port=PORT, use_reloader=False)
