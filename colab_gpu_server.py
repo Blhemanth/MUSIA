@@ -87,6 +87,7 @@ class QuantumFeatureEnhancer(nn.Module):
         self.expand = nn.Linear(n_qubits, embed_dim)
         self.scale = nn.Parameter(torch.tensor(1.0))
 
+    @torch.no_grad()
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         orig_device = x.device
         orig_dtype = x.dtype
@@ -102,12 +103,16 @@ class QuantumFeatureEnhancer(nn.Module):
 
         q_list = []
         for i in range(flat.shape[0]):
-            tok_out = self.quantum_layer(flat[i])
-            q_list.append(tok_out.cpu())
+            tok = flat[i].detach()
+            tok_out = self.quantum_layer(tok)
+            q_list.append(tok_out.detach().cpu())
 
         quantum_expectations = torch.stack(q_list).view(*orig_shape)
         expanded = self.expand(quantum_expectations)
         enhanced = residual + self.scale * expanded
+
+        # Explicitly clean up intermediate CPU tensors
+        del x_cpu, residual, normed, compressed, flat, q_list, quantum_expectations, expanded
 
         # Return back in exact device and dtype expected by SDXL
         return enhanced.to(device=orig_device, dtype=orig_dtype)
@@ -131,7 +136,8 @@ if os.path.exists(PQC_PATH):
 else:
     print(f"[INFO] PQC weights not found at {PQC_PATH}. Using fallback mode.")
 
-# Load SDXL Base Pipeline with CPU offloading to fit in Colab T4 VRAM
+# Load SDXL Base Pipeline directly on GPU (T4 15GB VRAM) with memory-efficient attention & VAE tiling.
+# Keeping SDXL on GPU instead of CPU offload protects Colab's 12.7GB System RAM from filling up!
 print("[MUSIA COLAB] Loading SDXL base model (stabilityai/stable-diffusion-xl-base-1.0)...")
 pipe = StableDiffusionXLPipeline.from_pretrained(
     "stabilityai/stable-diffusion-xl-base-1.0",
@@ -141,12 +147,18 @@ pipe = StableDiffusionXLPipeline.from_pretrained(
 )
 
 if DEVICE == "cuda":
-    # Drastically lowers VRAM from 15GB to ~5.5GB to eliminate CUDA out of memory!
-    pipe.enable_model_cpu_offload()
+    pipe = pipe.to("cuda")
+    # Slices cross-attention computation to eliminate VRAM spikes (<10GB peak on T4)
+    pipe.enable_attention_slicing()
     try:
-        pipe.vae.enable_tiling()
+        pipe.enable_vae_tiling()
+        pipe.enable_vae_slicing()
     except Exception:
-        pass
+        try:
+            pipe.vae.enable_tiling()
+            pipe.vae.enable_slicing()
+        except Exception:
+            pass
 else:
     pipe = pipe.to("cpu")
 
@@ -225,9 +237,20 @@ def generate():
 
         buf = io.BytesIO()
         image.save(buf, format="PNG", quality=95)
-        buf.seek(0)
-        print(f"[OK] Scene #{scene_id} rendered successfully ({buf.getbuffer().nbytes} bytes)!")
-        return send_file(buf, mimetype="image/png")
+        img_bytes = buf.getvalue()
+        buf.close()
+
+        # Aggressively release references & force garbage collection to keep System RAM low
+        del result, image
+        if 'prompt_embeds' in locals():
+            del prompt_embeds, negative_prompt_embeds, pooled_prompt_embeds, negative_pooled_prompt_embeds
+        import gc
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+        print(f"[OK] Scene #{scene_id} rendered successfully ({len(img_bytes)} bytes)!")
+        return send_file(io.BytesIO(img_bytes), mimetype="image/png")
 
     except Exception as exc:
         import traceback
@@ -240,12 +263,16 @@ def generate():
 # 5. ANTI-SLEEP HEARTBEAT THREAD & RUNNER
 # ------------------------------------------------------------------------------
 def keep_alive_worker():
-    """Background heartbeat that prevents kernel idling."""
+    """Background heartbeat that prevents kernel idling and monitors RAM."""
+    import psutil
     while True:
-        time.sleep(120)
+        time.sleep(60)
+        sys_ram = psutil.virtual_memory()
+        vram_str = ""
         if torch.cuda.is_available():
             vram_gb = torch.cuda.memory_reserved() / (1024 ** 3)
-            print(f"[HEARTBEAT] GPU Active | Reserved VRAM: {vram_gb:.2f} GB")
+            vram_str = f"| GPU VRAM: {vram_gb:.2f} GB"
+        print(f"[HEARTBEAT] System RAM: {sys_ram.used / (1024**3):.2f}/{sys_ram.total / (1024**3):.2f} GB ({sys_ram.percent}%) {vram_str}")
 
 
 if __name__ == "__main__":
