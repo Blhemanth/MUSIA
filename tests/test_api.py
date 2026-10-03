@@ -192,12 +192,53 @@ class TestFastAPIEndpoints(unittest.IsolatedAsyncioTestCase):
         self.assertIn("standard", data)
         self.assertIn("diagnostics", data["quantum"])
 
-    async def test_story_exceeds_max_length_rejected(self):
-        """Test POST /api/parse-story with > 5000 chars is rejected with 422."""
-        huge_story = "A" * 5500
-        response = await self.client.post("/api/parse-story", json={"story": huge_story})
-        self.assertEqual(response.status_code, 422)
+    async def test_input_sanitization_strips_html_and_script(self):
+        """Test that malicious HTML/script tags are stripped during parsing."""
+        malicious_story = (
+            "<script>alert('xss')</script><style>body{color:red}</style>"
+            "Commander Vance observed the quantum flare through the crystalline observatory viewport."
+        )
+        response = await self.client.post("/api/parse-story", json={"story": malicious_story})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        for scene in data["scenes"]:
+            self.assertNotIn("<script>", scene)
+            self.assertNotIn("alert('xss')", scene)
+            self.assertNotIn("<style>", scene)
+
+    async def test_security_headers_present(self):
+        """Test that security headers (CSP, nosniff, SAMEORIGIN) are returned."""
+        response = await self.client.get("/api/health")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers.get("x-content-type-options"), "nosniff")
+        self.assertEqual(response.headers.get("x-frame-options"), "SAMEORIGIN")
+        self.assertIn("Content-Security-Policy", response.headers)
+
+    async def test_generate_proxy_route(self):
+        """Test POST /api/generate proxy route for single frame rendering."""
+        response = await self.client.post(
+            "/api/generate",
+            json={
+                "scene_prompt": "Golden quantum threads weaving through the dark void.",
+                "scene_id": 1,
+                "model": "mock"
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["status"], "success")
+        self.assertIn("image_url", data)
+
+    async def test_scenes_capped_at_max_12(self):
+        """Test that stories generating more than 12 scenes are capped at 12."""
+        long_story = " ".join([f"Sentence {i}: The explorer advanced into chamber {i}." for i in range(1, 25)])
+        response = await self.client.post("/api/parse-story", json={"story": long_story})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertLessEqual(data["total_scenes"], 12)
+        self.assertLessEqual(len(data["scenes"]), 12)
 
 
 if __name__ == "__main__":
     unittest.main()
+

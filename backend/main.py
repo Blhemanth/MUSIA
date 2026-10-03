@@ -6,13 +6,17 @@ Phase 2+: FastAPI Backend Server — Multilingual Processing (English, Hindi, Be
 """
 
 import os
+import re
+import html
+import time
 import asyncio
+from collections import defaultdict
 
 from typing import Optional
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field, field_validator
 
 from .story_parser import (
@@ -33,6 +37,31 @@ from .quantum_pipeline import weight_manager
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # ---------------------------------------------------------------------------
+# Security & Sanitization Utilities
+# ---------------------------------------------------------------------------
+
+MAX_STORY_LENGTH = 5000
+MAX_SCENES = 12
+
+def sanitize_text(text: str) -> str:
+    """
+    Sanitize text input by removing dangerous script/style/iframe tags
+    and normalizing unescaped HTML characters.
+    """
+    if not text:
+        return ""
+    # Strip script, style, iframe, object tags and their contents
+    cleaned = re.sub(r'<(script|style|iframe|object|embed)[^>]*>.*?</\1>', '', text, flags=re.IGNORECASE | re.DOTALL)
+    # Strip remaining HTML tags
+    cleaned = re.sub(r'<[^>]+>', '', cleaned)
+    # Unescape HTML entities
+    cleaned = html.unescape(cleaned)
+    # Strip non-printable ASCII control characters except \n, \r, \t
+    cleaned = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', cleaned)
+    return cleaned.strip()
+
+
+# ---------------------------------------------------------------------------
 # App initialisation
 # ---------------------------------------------------------------------------
 
@@ -46,6 +75,46 @@ app = FastAPI(
     ),
     version="3.0.0",
 )
+
+# Per-IP sliding window rate limiting (max 120 req / min per IP)
+RATE_LIMIT_MAX_REQUESTS = 120
+RATE_LIMIT_WINDOW_SECONDS = 60
+_request_records = defaultdict(list)
+
+@app.middleware("http")
+async def security_and_rate_limit_middleware(request: Request, call_next):
+    # Determine client IP address
+    client_ip = request.client.host if request.client else "unknown"
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        client_ip = forwarded.split(",")[0].strip()
+
+    now = time.time()
+    window_start = now - RATE_LIMIT_WINDOW_SECONDS
+    records = _request_records[client_ip]
+    _request_records[client_ip] = [ts for ts in records if ts > window_start]
+
+    if request.url.path.startswith("/api/"):
+        if len(_request_records[client_ip]) >= RATE_LIMIT_MAX_REQUESTS:
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "Too many requests. Please slow down and try again."},
+                headers={"Retry-After": "60"}
+            )
+        _request_records[client_ip].append(now)
+
+    response = await call_next(request)
+
+    # Security Headers (CSP, X-Content-Type-Options, Referrer-Policy, X-Frame-Options)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; "
+        "img-src 'self' https: data: blob:; "
+        "connect-src 'self' https: http:;"
+    )
+    return response
 
 # Allow all origins (tighten for production)
 app.add_middleware(
@@ -99,16 +168,19 @@ generation_status: dict = {
 # ---------------------------------------------------------------------------
 
 class StoryRequest(BaseModel):
-    story: str = Field(..., max_length=5000, description="Raw story text, capped at 5000 characters.")
+    story: str = Field(..., max_length=MAX_STORY_LENGTH, description="Raw story text, capped at 5000 characters.")
 
     @field_validator("story")
     @classmethod
     def story_must_not_be_empty(cls, v: str) -> str:
         if not v or not v.strip():
             raise ValueError("The 'story' field must not be empty.")
-        if len(v.strip()) > 5000:
-            raise ValueError("Story exceeds maximum allowed length of 5,000 characters.")
-        return v.strip()
+        clean = sanitize_text(v)
+        if not clean:
+            raise ValueError("The 'story' field contains no valid content after sanitization.")
+        if len(clean) > MAX_STORY_LENGTH:
+            raise ValueError(f"Story exceeds maximum allowed length of {MAX_STORY_LENGTH:,} characters.")
+        return clean
 
 
 class ParseStoryResponse(BaseModel):
@@ -130,11 +202,19 @@ class GenerationRequest(BaseModel):
 
 
 class SingleSceneRequest(BaseModel):
-    """Body for /api/generate-scene."""
+    """Body for /api/generate-scene and /api/generate proxy."""
     scene_prompt: str = Field(..., min_length=1, max_length=1500)
-    scene_id: int = 1
+    scene_id: int = Field(1, ge=1, le=MAX_SCENES)
     model: str = "quantum"
     seed: Optional[int] = None
+
+    @field_validator("scene_prompt")
+    @classmethod
+    def clean_scene_prompt(cls, v: str) -> str:
+        clean = sanitize_text(v)
+        if not clean:
+            raise ValueError("Scene prompt cannot be empty.")
+        return clean
 
 
 class ColabConfigRequest(BaseModel):
@@ -145,8 +225,16 @@ class ColabConfigRequest(BaseModel):
 class CompareSceneRequest(BaseModel):
     """Body for /api/compare-scene."""
     scene_prompt: str = Field(..., min_length=1, max_length=1500)
-    scene_id: int = 1
+    scene_id: int = Field(1, ge=1, le=MAX_SCENES)
     seed: Optional[int] = None
+
+    @field_validator("scene_prompt")
+    @classmethod
+    def clean_compare_prompt(cls, v: str) -> str:
+        clean = sanitize_text(v)
+        if not clean:
+            raise ValueError("Scene prompt cannot be empty.")
+        return clean
 
 
 # ---------------------------------------------------------------------------
@@ -224,17 +312,12 @@ def serve_frontend():
     return {"status": "success", "message": "MUSIA API v3 is up and running."}
 
 
-@app.get("/api/health", summary="Health check")
+@app.get("/api/health", summary="Health check proxy endpoint")
 async def health_check():
-    """Health check confirming API status and model weight availability."""
-    return {
-        "status": "success",
-        "message": "MUSIA API v3 is up and running.",
-        "pqc_model_loaded": weight_manager.is_pqc_loaded,
-        "lora_adapter_available": weight_manager.has_lora_adapter,
-        "device": weight_manager.device,
-        "supported_languages": ["English", "Hindi (Devanagari)", "Bengali (Bangla)"],
-    }
+    """Health check confirming API status, model weight availability, and Colab GPU state."""
+    data = await get_system_status()
+    data["status"] = "success"
+    return data
 
 
 @app.post(
@@ -250,6 +333,8 @@ async def parse_story(request: StoryRequest):
     global generation_status
 
     scenes = parse_story_to_scenes(request.story)
+    if scenes:
+        scenes = scenes[:MAX_SCENES]
 
     if not scenes:
         raise HTTPException(
@@ -280,8 +365,11 @@ async def parse_story_detailed(request: StoryRequest):
     Accept raw story text in English, Hindi, or Bengali and return detailed
     scene metadata including language detection, token counts, and scene titles.
     Supports Purna Viram '।' sentence boundaries for Indic scripts.
+    Capped at MAX_SCENES (12 scenes).
     """
     details = parse_story_scenes_detailed(request.story)
+    if details:
+        details = details[:MAX_SCENES]
     if not details:
         raise HTTPException(
             status_code=422,
@@ -502,3 +590,13 @@ async def compare_scene(request: CompareSceneRequest):
     except Exception as exc:
         print(f"[ERR] Error in comparison: {exc}")
         raise HTTPException(status_code=500, detail=str(exc))
+
+
+# ---------------------------------------------------------------------------
+# Serverless Proxy Route Aliases
+# ---------------------------------------------------------------------------
+
+@app.post("/api/generate", summary="Single scene generation proxy endpoint")
+async def generate_proxy(request: SingleSceneRequest):
+    """Serverless proxy route for generating a single storyboard frame."""
+    return await generate_single_scene(request)

@@ -172,16 +172,44 @@ Main_musia_project/
 
 ---
 
+## 🔒 Security & Environment Configuration
+
+MUSIA Quantum Studio uses serverless proxy architecture so that your Google Colab ngrok tunnel URL and authentication secrets are never exposed to browser clients:
+
+- **Serverless Proxy**: Client requests route to `/api/health` and `/api/generate`, keeping the backend URL server-side.
+- **Shared-Secret Header**: The proxy automatically sends `X-MUSIA-Token` and `Authorization: Bearer <token>` to protect your Colab GPU instance.
+- **Rate Limiting**: Built-in sliding-window middleware caps requests at 120 req/min per IP to prevent GPU abuse.
+- **Input Sanitization & Length Caps**: Scripts are sanitized against XSS/HTML injections, capped at 5,000 characters, and scenes are capped at max 12 scenes.
+- **Security Headers**: Deployed with `nosniff`, `SAMEORIGIN`, `strict-origin-when-cross-origin`, and Content Security Policy headers.
+
+### Required Environment Variables
+
+Copy `.env.example` to `.env` or configure these in your Vercel Project Settings:
+
+| Variable | Description | Example |
+|---|---|---|
+| `COLAB_NGROK_URL` | Active Google Colab ngrok tunnel URL | `https://xxxx-xx.ngrok-free.dev` |
+| `COLAB_SECRET_TOKEN` | Shared secret token to authenticate GPU calls | `your_secret_token_here` |
+| `PORT` | Local FastAPI port (default: 8000) | `8000` |
+| `ENVIRONMENT` | Deployment environment | `production` / `development` |
+
+---
+
 ## 🛠️ API Reference
 
 | Endpoint | Method | Description |
 |---|---|---|
 | `/` | `GET` | Serves the Quantum Studio director interface |
-| `/api/health` | `GET` | Health status confirmation |
-| `/api/parse-story` | `POST` | Dissects raw narrative text into formatted scene prompts |
-| `/api/start-generation` | `POST` | Initiates asynchronous image generation (`quantum`, `standard`, `mock`) |
+| `/api/health` | `GET` | Health check proxy returning honest GPU tunnel & backend status |
+| `/api/status` | `GET` | Detailed system status with Colab device and latency ping |
+| `/api/generate` | `POST` | Proxy endpoint to render a single scene illustration |
+| `/api/generate-scene` | `POST` | Direct single scene generation with PQC diagnostics |
+| `/api/compare-scene` | `POST` | Side-by-side Quantum vs Standard SDXL comparison generator |
+| `/api/parse-story` | `POST` | Dissects raw narrative text into formatted scene cues (max 12) |
+| `/api/parse-story-detailed`| `POST` | Dissects text with Unicode language detection (EN, HI, BN, TA, KN) |
+| `/api/start-generation` | `POST` | Initiates background batch generation |
 | `/api/stop-generation` | `POST` | Sends graceful halt signal to active pipeline |
-| `/api/generation-status` | `GET` | Polling endpoint for real-time progress and frame URLs |
+| `/api/generation-status` | `GET` | Polling endpoint for real-time progress |
 
 ---
 

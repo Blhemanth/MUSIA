@@ -179,6 +179,16 @@ print("[OK] All Neural & Quantum Models Ready!")
 # ------------------------------------------------------------------------------
 app = Flask(__name__)
 
+COLAB_SECRET_TOKEN = os.environ.get("COLAB_SECRET_TOKEN", "")
+
+def verify_token():
+    if not COLAB_SECRET_TOKEN:
+        return True
+    custom_token = request.headers.get("X-MUSIA-Token", "")
+    auth_header = request.headers.get("Authorization", "")
+    bearer_token = auth_header.replace("Bearer ", "").strip() if auth_header.startswith("Bearer ") else ""
+    return (custom_token == COLAB_SECRET_TOKEN) or (bearer_token == COLAB_SECRET_TOKEN)
+
 @app.route("/", methods=["GET"])
 @app.route("/health", methods=["GET"])
 def health():
@@ -191,6 +201,8 @@ def health():
 
 @app.route("/generate", methods=["POST"])
 def generate():
+    if not verify_token():
+        return jsonify({"error": "Unauthorized: invalid or missing MUSIA secret token"}), 401
     data = request.get_json(force=True) or {}
     prompt = data.get("prompt", "Cinematic storyboard illustration")
     use_quantum = data.get("use_quantum", True)

@@ -306,10 +306,19 @@ def render_multilingual_scene_illustration(
     # 1. Check if Colab ngrok tunnel is reachable
     if colab_url and not colab_url.startswith("https://your-"):
         try:
+            colab_secret = os.environ.get("COLAB_SECRET_TOKEN", "")
+            base_headers = {
+                "ngrok-skip-browser-warning": "true",
+                "User-Agent": "MUSIA-Client/3.0",
+            }
+            if colab_secret:
+                base_headers["X-MUSIA-Token"] = colab_secret
+                base_headers["Authorization"] = f"Bearer {colab_secret}"
+
             # Fast ping before dispatching large generation request
             ping_resp = requests.get(
                 f"{colab_url.rstrip('/')}/health",
-                headers={"ngrok-skip-browser-warning": "true", "User-Agent": "MUSIA-Client/3.0"},
+                headers=base_headers,
                 timeout=3.0,
             )
             if ping_resp.status_code == 200:
@@ -319,11 +328,8 @@ def render_multilingual_scene_illustration(
                     "use_quantum": use_quantum,
                     "scene_id": scene_id
                 }
-                headers = {
-                    "ngrok-skip-browser-warning": "true",
-                    "User-Agent": "MUSIA-Client/3.0",
-                    "Accept": "image/png, image/*",
-                }
+                headers = dict(base_headers)
+                headers["Accept"] = "image/png, image/*"
                 resp = requests.post(url, json=payload, headers=headers, timeout=120)
                 if resp.status_code == 200 and (resp.content.startswith(b"\x89PNG") or "image" in resp.headers.get("Content-Type", "")):
                     import base64

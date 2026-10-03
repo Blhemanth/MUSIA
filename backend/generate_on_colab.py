@@ -55,11 +55,15 @@ def ping_colab_tunnel(url: Optional[str] = None, timeout: float = 3.5) -> dict:
 
     import time
     start_t = time.time()
+    colab_secret = os.environ.get("COLAB_SECRET_TOKEN", "")
     headers = {
         "ngrok-skip-browser-warning": "true",
         "User-Agent": "MUSIA-Client/3.0",
         "Accept": "application/json",
     }
+    if colab_secret:
+        headers["X-MUSIA-Token"] = colab_secret
+        headers["Authorization"] = f"Bearer {colab_secret}"
     try:
         health_url = f"{target}/health"
         resp = requests.get(health_url, headers=headers, timeout=timeout)
