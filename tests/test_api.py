@@ -229,6 +229,31 @@ class TestFastAPIEndpoints(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(data["status"], "success")
         self.assertIn("image_url", data)
 
+    async def test_robots_txt_served(self):
+        """Test GET /robots.txt serves crawler directives with sitemap link."""
+        response = await self.client.get("/robots.txt")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("text/plain", response.headers.get("content-type", ""))
+        self.assertIn("User-agent: *", response.text)
+        self.assertIn("Sitemap:", response.text)
+
+    async def test_sitemap_xml_served(self):
+        """Test GET /sitemap.xml serves valid XML sitemap for SEO."""
+        response = await self.client.get("/sitemap.xml")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("xml", response.headers.get("content-type", ""))
+        self.assertIn("<urlset", response.text)
+        self.assertIn("<loc>https://musia-mauve.vercel.app/</loc>", response.text)
+
+    async def test_empty_and_whitespace_story_validation(self):
+        """Test validation on empty and whitespace-only story submissions."""
+        for empty_val in ["", "   ", "\n\t  \n"]:
+            res1 = await self.client.post("/api/parse-story", json={"story": empty_val})
+            self.assertEqual(res1.status_code, 422)
+            res2 = await self.client.post("/api/parse-story-detailed", json={"story": empty_val})
+            self.assertEqual(res2.status_code, 422)
+
+
     async def test_scenes_capped_at_max_12(self):
         """Test that stories generating more than 12 scenes are capped at 12."""
         long_story = " ".join([f"Sentence {i}: The explorer advanced into chamber {i}." for i in range(1, 25)])

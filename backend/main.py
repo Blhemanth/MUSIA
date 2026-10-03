@@ -312,6 +312,25 @@ def serve_frontend():
     return {"status": "success", "message": "MUSIA API v3 is up and running."}
 
 
+@app.get("/robots.txt", summary="Serve robots.txt for search engines")
+def serve_robots():
+    """Serve robots.txt for crawler configuration."""
+    robots_file = os.path.join(BASE_DIR, "frontend", "robots.txt")
+    if os.path.exists(robots_file):
+        return FileResponse(robots_file, media_type="text/plain")
+    return Response(content="User-agent: *\nAllow: /\n", media_type="text/plain")
+
+
+@app.get("/sitemap.xml", summary="Serve sitemap.xml for SEO indexing")
+def serve_sitemap():
+    """Serve sitemap.xml for search engines."""
+    sitemap_file = os.path.join(BASE_DIR, "frontend", "sitemap.xml")
+    if os.path.exists(sitemap_file):
+        return FileResponse(sitemap_file, media_type="application/xml")
+    return Response(content="<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\"></urlset>", media_type="application/xml")
+
+
+
 @app.get("/api/health", summary="Health check proxy endpoint")
 async def health_check():
     """Health check confirming API status, model weight availability, and Colab GPU state."""

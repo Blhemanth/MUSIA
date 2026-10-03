@@ -20,6 +20,14 @@
       "dest": "frontend/$1"
     },
     {
+      "src": "/robots.txt",
+      "dest": "frontend/robots.txt"
+    },
+    {
+      "src": "/sitemap.xml",
+      "dest": "frontend/sitemap.xml"
+    },
+    {
       "src": "/(.*)",
       "dest": "frontend/index.html"
     }

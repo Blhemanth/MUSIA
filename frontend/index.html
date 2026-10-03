@@ -3,23 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MUSIA — Quantum Studio | Multilingual Story Illustration</title>
-  <meta name="description" content="MUSIA transforms multilingual prose (English, Hindi, Bengali) into cinematic storyboards via PennyLane 4-qubit PQC Hilbert space modulation and SDXL LoRA diffusion." />
+  <title>MUSIA — Quantum Studio | Multilingual Storyboard Neural Diffusion</title>
+  <meta name="description" content="MUSIA transforms multilingual prose (English, Hindi, Bengali, Kannada, Tamil) into cinematic storyboards via PennyLane 4-qubit PQC Hilbert space modulation and SDXL LoRA diffusion." />
   <meta name="theme-color" content="#040714" />
+  <link rel="canonical" href="https://musia-mauve.vercel.app/" />
 
   <!-- Open Graph / Facebook / LinkedIn -->
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="MUSIA — Quantum Studio | Multilingual Story Illustration" />
-  <meta property="og:description" content="Direct multilingual narratives into cinematic visual storyboards with Quantum-Enhanced Neural Diffusion." />
+  <meta property="og:url" content="https://musia-mauve.vercel.app/" />
+  <meta property="og:title" content="MUSIA — Quantum Studio | Multilingual Storyboard Neural Diffusion" />
+  <meta property="og:description" content="Direct multi-scene prose into cinematic storyboards with 4-qubit quantum state modulation and SDXL LoRA diffusion." />
+  <meta property="og:image" content="https://musia-mauve.vercel.app/static/og-preview.png" />
   <meta property="og:site_name" content="MUSIA Quantum Studio" />
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://musia-mauve.vercel.app/" />
   <meta name="twitter:title" content="MUSIA — Quantum Studio" />
-  <meta name="twitter:description" content="Multilingual Narrative Neural Diffusion with 4-Qubit Parameterized Quantum Circuit modulation." />
+  <meta name="twitter:description" content="Multilingual Narrative Neural Diffusion with PennyLane 4-Qubit Parameterized Quantum Circuit modulation." />
+  <meta name="twitter:image" content="https://musia-mauve.vercel.app/static/og-preview.png" />
 
-  <!-- SVG Favicon with Quantum Symbol -->
+  <!-- Favicon Set -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300f2fe' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='3' fill='%2300f2fe'/%3E%3Cellipse cx='12' cy='12' rx='9' ry='3.5' stroke='%2300f2fe' transform='rotate(30 12 12)'/%3E%3Cellipse cx='12' cy='12' rx='9' ry='3.5' stroke='%237928ca' transform='rotate(-30 12 12)'/%3E%3C/svg%3E" />
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300f2fe' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='3' fill='%2300f2fe'/%3E%3Cellipse cx='12' cy='12' rx='9' ry='3.5' stroke='%2300f2fe' transform='rotate(30 12 12)'/%3E%3Cellipse cx='12' cy='12' rx='9' ry='3.5' stroke='%237928ca' transform='rotate(-30 12 12)'/%3E%3C/svg%3E" />
 
   <!-- Three.js (for WebGL Image Generation Shader Effect) -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
@@ -532,12 +538,12 @@
   <!-- ════════════════════════════════════════════
        MAIN INTERACTIVE STUDIO BOARD
   ════════════════════════════════════════════ -->
-  <main class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pb-20 grid grid-cols-1 lg:grid-cols-12 gap-6 mt-2">
+  <main id="main-content" class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pb-20 grid grid-cols-1 lg:grid-cols-12 gap-6 mt-2">
 
     <!-- ╔══════════════════════════════════════
          LEFT PANEL — Script & Director's Board (5 cols)
     ══════════════════════════════════════╗ -->
-    <section class="lg:col-span-5 flex flex-col gap-5">
+    <section class="lg:col-span-5 flex flex-col gap-5" aria-labelledby="section-script-heading">
 
       <!-- Story Script Input Card -->
       <div class="glass-studio rounded-2xl p-5 relative overflow-hidden group">
@@ -548,7 +554,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/>
               </svg>
             </span>
-            <h2 class="font-bold text-xs uppercase tracking-widest text-slate-200">Prose Script Input</h2>
+            <h2 id="section-script-heading" class="font-bold text-xs uppercase tracking-widest text-slate-200">Prose Script Input</h2>
           </div>
           <div class="flex items-center gap-1.5 flex-wrap">
             <span class="text-[11px] text-slate-400 font-medium mr-1">Load Sample:</span>
@@ -627,8 +633,8 @@
         </div>
 
         <!-- Parse Story Button -->
-        <button id="btn-parse" onclick="parseStory()"
-                class="btn-quantum-primary mt-3.5 w-full py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2.5">
+        <button id="btn-parse" onclick="parseStory()" disabled
+                class="btn-quantum-primary mt-3.5 w-full py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2.5 disabled:opacity-40 disabled:cursor-not-allowed">
           <svg class="w-4 h-4 text-cyan-300" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z"/>
           </svg>
@@ -786,7 +792,7 @@
     <!-- ╔══════════════════════════════════════
          RIGHT PANEL — Cinematic Storyboard Gallery (7 cols)
     ══════════════════════════════════════╗ -->
-    <section class="lg:col-span-7 flex flex-col gap-4">
+    <section class="lg:col-span-7 flex flex-col gap-4" aria-labelledby="section-gallery-heading">
       <div class="glass-studio rounded-2xl p-6 flex-1 flex flex-col" id="gallery-container">
         
         <!-- Gallery Header -->
@@ -800,7 +806,7 @@
               </svg>
             </div>
             <div>
-              <h2 class="font-extrabold text-sm uppercase tracking-wider text-slate-100">Cinematic Scene Gallery</h2>
+              <h2 id="section-gallery-heading" class="font-extrabold text-sm uppercase tracking-wider text-slate-100">Cinematic Scene Gallery</h2>
               <p class="text-xs text-slate-300">High-Fidelity AI Illustrative Frames</p>
             </div>
           </div>
@@ -891,6 +897,43 @@
     </section>
 
   </main>
+
+  <!-- ════════════════════════════════════════════
+       STUDIO FOOTER — CREDITS & QUANTUM EXPLANATION
+  ════════════════════════════════════════════ -->
+  <footer class="relative z-10 border-t border-indigo-500/15 glass-studio py-8 px-4 sm:px-6 mt-6 text-slate-400">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div class="space-y-2 max-w-xl">
+        <div class="flex items-center gap-2">
+          <span class="text-lg font-extrabold tracking-wider bg-gradient-to-r from-cyan-400 via-indigo-300 to-fuchsia-400 bg-clip-text text-transparent">MUSIA</span>
+          <span class="text-xs font-mono text-cyan-400 font-semibold">• Quantum Studio v3.0</span>
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          Transforms multi-scene prose into cinematic storyboards. A 4-qubit Parameterized Quantum Circuit (PQC) in PennyLane maps narrative emotional sentiment onto a 16-dimensional complex Hilbert space state, modulating prompt embeddings to guide SDXL cross-attention diffusion.
+        </p>
+        <p class="text-[11px] text-slate-400 font-mono">
+          MIT License • Built by Hemanth &amp; MUSIA Research Group
+        </p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-4 text-xs font-mono">
+        <a href="https://github.com/Blhemanth/MUSIA" target="_blank" rel="noopener noreferrer"
+           class="btn-subtle px-3 py-1.5 rounded-lg text-cyan-300 hover:text-white border border-cyan-500/30 flex items-center gap-1.5 transition-colors">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+          </svg>
+          <span>GitHub Repository</span>
+        </a>
+        <button type="button" onclick="openHowItWorksModal()" class="text-slate-300 hover:text-cyan-300">
+          Architecture Doc
+        </button>
+        <a href="#main-content" class="text-slate-400 hover:text-cyan-400 flex items-center gap-1">
+          <span>Top</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5"/></svg>
+        </a>
+      </div>
+    </div>
+  </footer>
 
   <!-- ════════════════════════════════════════════
        CINEMA LIGHTBOX & SHADER REVEAL MODAL
@@ -1659,9 +1702,10 @@
     storyInput.addEventListener('input', () => {
       const text = storyInput.value;
       const len = text.length;
-      charCount.textContent = `${len.toLocaleString()} / 4,000 characters`;
-      charCount.className = len > 3800 ? 'text-[11px] text-amber-400 font-mono font-bold' : 'text-[11px] text-slate-300 font-mono';
+      charCount.textContent = `${len.toLocaleString()} / 5,000 characters`;
+      charCount.className = len > 4800 ? 'text-[11px] text-amber-400 font-mono font-bold' : 'text-[11px] text-slate-300 font-mono';
       wordCount.textContent = text.trim() ? text.trim().split(/\s+/).length.toLocaleString() : '0';
+      btnParse.disabled = !text.trim() || isParsing;
       saveToLocalStorage();
     });
 
@@ -1968,19 +2012,44 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
     });
 
     // ── Story Dissection & Detailed Multilingual NLP ─────────────────────────
+    let isParsing = false;
     async function parseStory() {
+      if (isParsing) return;
       const story = storyInput.value.trim();
       if (!story) {
         showToast('Please insert a story narrative first.', 'warning');
         return;
       }
 
+      isParsing = true;
       btnParse.disabled = true;
       btnParseText.textContent = 'Dissecting Narrative...';
       parseSpinner.classList.remove('hidden');
       quantumCanvasController.setState('analyzing');
       clearScenes();
       resetProgress();
+
+      // Show animated loading skeleton in scene cues panel while parsing
+      scenesEmpty.classList.add('hidden');
+      scenesList.classList.remove('hidden');
+      scenesList.innerHTML = `
+        <div id="scenes-skeleton" class="space-y-2.5 p-1" aria-busy="true" aria-label="Parsing scenes skeleton">
+          <div class="p-3 rounded-xl bg-cosmos-900/60 border border-indigo-500/20 animate-pulse flex items-center justify-between">
+            <div class="space-y-2 w-3/4">
+              <div class="h-2.5 bg-cyan-950 rounded w-1/4 border border-cyan-500/30"></div>
+              <div class="h-3 bg-slate-800 rounded w-full"></div>
+            </div>
+            <div class="w-7 h-7 rounded-lg bg-cosmos-950 border border-indigo-500/20"></div>
+          </div>
+          <div class="p-3 rounded-xl bg-cosmos-900/60 border border-indigo-500/20 animate-pulse flex items-center justify-between">
+            <div class="space-y-2 w-3/4">
+              <div class="h-2.5 bg-purple-950 rounded w-1/4 border border-purple-500/30"></div>
+              <div class="h-3 bg-slate-800 rounded w-5/6"></div>
+            </div>
+            <div class="w-7 h-7 rounded-lg bg-cosmos-950 border border-indigo-500/20"></div>
+          </div>
+        </div>
+      `;
 
       try {
         const data = await safeFetchJson(`${API_BASE}/api/parse-story-detailed`, {
@@ -2007,8 +2076,10 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
       } catch (err) {
         showToast(`Parsing error: ${err.message}`, 'error');
         statusText.textContent = '❌ Parsing failed — verify server connectivity.';
+        clearScenes();
       } finally {
-        btnParse.disabled = false;
+        isParsing = false;
+        btnParse.disabled = !storyInput.value.trim();
         btnParseText.textContent = 'Analyze & Dissect Scenes';
         parseSpinner.classList.add('hidden');
         quantumCanvasController.setState('idle');
@@ -2191,7 +2262,12 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
         delete sceneSeeds[index];
         delete sceneSeedLocks[index];
         delete sceneStatuses[index];
-        renderScenes(parsedScenes);
+        if (parsedScenes.length === 0) {
+          clearScenes();
+          btnStart.disabled = true;
+        } else {
+          renderScenes(parsedScenes);
+        }
         saveToLocalStorage();
         showToast('Scene removed.', 'info');
       }
@@ -2223,6 +2299,7 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
 
     // ── Generation Pipeline Execution ────────────────────────────────────────
     async function startGeneration() {
+      if (isPipelineRunning) return;
       if (parsedScenes.length === 0) {
         showToast('Analyze and dissect scenes before generating.', 'warning');
         return;
@@ -2282,6 +2359,7 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
 
         sceneStatuses[i] = 'rendering';
         renderScenes(parsedScenes);
+        addSkeletonCard(sceneId, prompt);
         const frameStartTime = Date.now();
 
         statusSceneText.textContent = `Synthesizing Scene ${sceneId} of ${total}`;
@@ -2395,6 +2473,7 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
       const sceneIndex = sceneId - 1;
       sceneStatuses[sceneIndex] = 'rendering';
       renderScenes(parsedScenes);
+      addSkeletonCard(sceneId, prompt);
 
       showToast(`Rendering Scene #${sceneId}...`, 'info');
       const frameAbortCtrl = new AbortController();
@@ -2442,6 +2521,7 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
     }
 
     function requestStopGeneration() {
+      if (!isPipelineRunning) return;
       isGenerationCancelled = true;
       btnStop.disabled = true;
 
@@ -2460,7 +2540,7 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
 
       // Confirm UI returns to idle immediately
       isPipelineRunning = false;
-      btnStart.disabled = false;
+      btnStart.disabled = parsedScenes.length === 0;
       btnStop.disabled = true;
       modelSelect.disabled = false;
       statusDetail.classList.add('hidden');
@@ -2481,6 +2561,30 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
 
     // ── Gallery Cards & 3D Tilt Parallax ─────────────────────────────────────
     const renderedGalleryFrames = [];
+
+    function addSkeletonCard(sceneId, promptText) {
+      galleryEmpty.classList.add('hidden');
+      galleryGrid.classList.remove('hidden');
+      const existing = document.getElementById(`card-scene-${sceneId}`);
+      if (existing) return;
+      const shortPrompt = promptText.replace(/^Cinematic story illustration, scene \d+:\s*/i, '');
+      const card = document.createElement('div');
+      card.className = 'cinematic-card overflow-hidden flex flex-col border border-cyan-500/30 bg-cosmos-950/60 animate-pulse';
+      card.id = `card-scene-${sceneId}`;
+      card.setAttribute('aria-busy', 'true');
+      card.setAttribute('aria-label', `Frame ${sceneId} rendering`);
+      card.innerHTML = `
+        <div class="relative bg-cosmos-950 aspect-video flex flex-col items-center justify-center p-4">
+          <div class="w-8 h-8 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin mb-2" aria-hidden="true"></div>
+          <p class="text-xs font-mono text-cyan-300 font-bold">Rendering Frame #${sceneId}…</p>
+          <p class="text-[10px] text-slate-400 font-mono mt-1">Applying quantum state modulation</p>
+        </div>
+        <div class="p-3.5 space-y-2">
+          <p class="text-xs text-slate-300 line-clamp-2">${escapeHtml(shortPrompt.slice(0, 100))}</p>
+        </div>
+      `;
+      galleryGrid.appendChild(card);
+    }
 
     function addImageCard(sceneId, imageUrl, promptText, modelType = 'quantum', quantumDiag = null) {
       galleryEmpty.classList.add('hidden');
@@ -3412,6 +3516,7 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
       scenesList.classList.add('hidden');
       scenesEmpty.classList.remove('hidden');
       sceneCountBadge.classList.add('hidden');
+      btnStart.disabled = true;
     }
 
     function resetProgress() {
@@ -3433,6 +3538,8 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
     // ── Initialize on Page Load ──────────────────────────────────────────────
     (async () => {
       await restoreFromLocalStorage();
+      btnParse.disabled = !storyInput.value.trim();
+      btnStart.disabled = parsedScenes.length === 0;
       await checkSystemHealth();
     })();
   </script>
