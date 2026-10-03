@@ -107,10 +107,16 @@
       overflow-x: hidden;
     }
 
-    /* ── Accessibility & Focus Rings ── */
+    /* ── Accessibility, Focus Rings & Mobile Touch Targets (WCAG 2.1 AA) ── */
     :focus-visible {
       outline: 2px solid #00f2fe !important;
       outline-offset: 2px !important;
+    }
+    @media (pointer: coarse) {
+      button, a, select, input[type="button"], input[type="submit"] {
+        min-height: 44px;
+        min-width: 44px;
+      }
     }
 
     /* ── Quantum Interactive Background Canvas ── */
@@ -1449,21 +1455,45 @@
       let width, height;
       let particles = [];
       let animId = null;
-      let currentState = 'idle'; // 'idle' | 'analyzing' | 'generating' | 'burst'
+      let currentState = 'idle'; // 'idle' | 'analyzing' | 'generating' | 'burst' | 'error'
+      let isLowPowerMode = false;
+      let lastFrameTime = performance.now();
+      let lowFpsFrameCount = 0;
 
-      // Media query reduced motion
-      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (prefersReducedMotion) isCanvasMotionActive = false;
+      // prefers-reduced-motion media query listener
+      const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+      if (motionQuery.matches) {
+        isCanvasMotionActive = false;
+        const statusLabel = document.getElementById('label-motion-status');
+        if (statusLabel) statusLabel.textContent = 'OFF';
+      }
+      motionQuery.addEventListener('change', (e) => {
+        isCanvasMotionActive = !e.matches;
+        const statusLabel = document.getElementById('label-motion-status');
+        if (statusLabel) statusLabel.textContent = isCanvasMotionActive ? 'ON' : 'OFF';
+        if (!isCanvasMotionActive && animId) {
+          cancelAnimationFrame(animId);
+          animId = null;
+          ctx.clearRect(0, 0, width, height);
+        } else if (isCanvasMotionActive && !animId) {
+          draw();
+        }
+      });
 
       function resize() {
-        width = canvas.width = window.innerWidth;
-        height = canvas.height = window.innerHeight;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        ctx.setTransform(1, 0, 0, 1, 0, 0); // reset transform
+        ctx.scale(dpr, dpr);
       }
       window.addEventListener('resize', resize);
       resize();
 
-      const particleCount = Math.min(Math.floor((width * height) / 22000), 65);
-      for (let i = 0; i < particleCount; i++) {
+      const particleBaseCount = Math.min(Math.floor((width * height) / 24000), 55);
+      for (let i = 0; i < particleBaseCount; i++) {
         particles.push({
           x: Math.random() * width,
           y: Math.random() * height,
@@ -1477,9 +1507,24 @@
 
       function draw() {
         if (!isCanvasMotionActive) return;
+        const now = performance.now();
+        const delta = now - lastFrameTime;
+        lastFrameTime = now;
+
+        // Adaptive frame rate monitoring (drop particle count if fps < 30)
+        if (delta > 35) { // < 28.5 fps
+          lowFpsFrameCount++;
+          if (lowFpsFrameCount > 45 && !isLowPowerMode) {
+            isLowPowerMode = true;
+            particles = particles.slice(0, Math.floor(particles.length / 2));
+          }
+        } else {
+          lowFpsFrameCount = Math.max(0, lowFpsFrameCount - 1);
+        }
+
         ctx.clearRect(0, 0, width, height);
 
-        const speedMul = currentState === 'generating' ? 2.2 : (currentState === 'analyzing' ? 1.6 : 0.9);
+        const speedMul = currentState === 'generating' ? 2.2 : (currentState === 'analyzing' ? 1.6 : 0.85);
 
         for (let i = 0; i < particles.length; i++) {
           const p = particles[i];
@@ -1494,24 +1539,26 @@
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.size * (currentState === 'generating' ? 1.3 : 1), 0, Math.PI * 2);
           ctx.fillStyle = p.color;
-          ctx.globalAlpha = p.alpha * (currentState === 'generating' ? 1.5 : 1);
+          ctx.globalAlpha = p.alpha * (currentState === 'generating' ? 1.4 : 1);
           ctx.fill();
 
-          // Entanglement lines
-          const maxDist = currentState === 'generating' ? 130 : 95;
-          for (let j = i + 1; j < particles.length; j++) {
-            const p2 = particles[j];
-            const dx = p.x - p2.x;
-            const dy = p.y - p2.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < maxDist) {
-              ctx.beginPath();
-              ctx.moveTo(p.x, p.y);
-              ctx.lineTo(p2.x, p2.y);
-              ctx.strokeStyle = currentState === 'generating' ? '#00f2fe' : '#6366f1';
-              ctx.globalAlpha = (1 - dist / maxDist) * (currentState === 'generating' ? 0.25 : 0.08);
-              ctx.lineWidth = currentState === 'generating' ? 1.0 : 0.6;
-              ctx.stroke();
+          // Entanglement lines (skip if low power mode)
+          if (!isLowPowerMode) {
+            const maxDist = currentState === 'generating' ? 120 : 85;
+            for (let j = i + 1; j < particles.length; j++) {
+              const p2 = particles[j];
+              const dx = p.x - p2.x;
+              const dy = p.y - p2.y;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              if (dist < maxDist) {
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.strokeStyle = currentState === 'generating' ? '#00f2fe' : '#6366f1';
+                ctx.globalAlpha = (1 - dist / maxDist) * (currentState === 'generating' ? 0.22 : 0.07);
+                ctx.lineWidth = currentState === 'generating' ? 0.9 : 0.5;
+                ctx.stroke();
+              }
             }
           }
         }
@@ -1520,15 +1567,32 @@
         animId = requestAnimationFrame(draw);
       }
 
-      // Page visibility listener for performance & power saving
+      // Page visibility listener for background power saving
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
           if (animId) cancelAnimationFrame(animId);
           animId = null;
         } else if (isCanvasMotionActive && !animId) {
+          lastFrameTime = performance.now();
           draw();
         }
       });
+
+      // IntersectionObserver for off-screen canvas pause
+      if ('IntersectionObserver' in window) {
+        const canvasObs = new IntersectionObserver((entries) => {
+          entries.forEach(e => {
+            if (!e.isIntersecting && animId) {
+              cancelAnimationFrame(animId);
+              animId = null;
+            } else if (e.isIntersecting && isCanvasMotionActive && !animId && !document.hidden) {
+              lastFrameTime = performance.now();
+              draw();
+            }
+          });
+        }, { threshold: 0.02 });
+        canvasObs.observe(canvas);
+      }
 
       if (isCanvasMotionActive) draw();
 
@@ -1539,7 +1603,10 @@
         toggleMotion: (force = null) => {
           isCanvasMotionActive = force !== null ? force : !isCanvasMotionActive;
           if (isCanvasMotionActive) {
-            if (!animId) draw();
+            if (!animId) {
+              lastFrameTime = performance.now();
+              draw();
+            }
           } else {
             if (animId) cancelAnimationFrame(animId);
             animId = null;
@@ -1548,7 +1615,6 @@
           return isCanvasMotionActive;
         },
         burst: () => {
-          // Shockwave burst particles
           for (let i = 0; i < 20; i++) {
             particles.push({
               x: width / 2,
@@ -1557,12 +1623,28 @@
               vy: (Math.random() - 0.5) * 6,
               size: Math.random() * 3 + 1.5,
               color: '#09d3ac',
-              alpha: 0.8
+              alpha: 0.85
             });
           }
           setTimeout(() => {
             particles.splice(particles.length - 20, 20);
           }, 1200);
+        },
+        errorTint: () => {
+          for (let i = 0; i < 15; i++) {
+            particles.push({
+              x: width / 2,
+              y: height / 2,
+              vx: (Math.random() - 0.5) * 5,
+              vy: (Math.random() - 0.5) * 5,
+              size: Math.random() * 3 + 1,
+              color: '#ef4444',
+              alpha: 0.75
+            });
+          }
+          setTimeout(() => {
+            particles.splice(particles.length - 15, 15);
+          }, 1000);
         }
       };
     })();
@@ -2477,12 +2559,20 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
         card.style.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg) translateY(0px)';
       });
 
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openCinemaModal(sceneId, fullUrl, shortPrompt);
+        }
+      });
+
       galleryGrid.appendChild(card);
     }
 
     function addErrorCard(sceneId, promptText, modelType, errorMsg = 'Render timed out or failed') {
       const existingCard = document.getElementById(`card-scene-${sceneId}`);
       if (existingCard) existingCard.remove();
+      try { quantumCanvasController.errorTint(); } catch (_) {}
 
       const shortPrompt = promptText.replace(/^Cinematic story illustration, scene \d+:\s*/i, '');
       const card = document.createElement('div');
