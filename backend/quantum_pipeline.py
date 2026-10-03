@@ -306,37 +306,46 @@ def render_multilingual_scene_illustration(
     # 1. Check if Colab ngrok tunnel is reachable
     if colab_url and not colab_url.startswith("https://your-"):
         try:
-            url = f"{colab_url.rstrip('/')}/generate"
-            payload = {
-                "prompt": short_prompt,
-                "use_quantum": use_quantum,
-                "scene_id": scene_id
-            }
-            headers = {
-                "ngrok-skip-browser-warning": "true",
-                "User-Agent": "MUSIA-Client/3.0",
-                "Accept": "image/png, image/*",
-            }
-            resp = requests.post(url, json=payload, headers=headers, timeout=180)
-            if resp.status_code == 200 and (resp.content.startswith(b"\x89PNG") or "image" in resp.headers.get("Content-Type", "")):
-                import base64
-                b64_data = base64.b64encode(resp.content).decode("utf-8")
-                data_url = f"data:image/png;base64,{b64_data}"
+            # Fast ping before dispatching large generation request
+            ping_resp = requests.get(
+                f"{colab_url.rstrip('/')}/health",
+                headers={"ngrok-skip-browser-warning": "true", "User-Agent": "MUSIA-Client/3.0"},
+                timeout=3.0,
+            )
+            if ping_resp.status_code == 200:
+                url = f"{colab_url.rstrip('/')}/generate"
+                payload = {
+                    "prompt": short_prompt,
+                    "use_quantum": use_quantum,
+                    "scene_id": scene_id
+                }
+                headers = {
+                    "ngrok-skip-browser-warning": "true",
+                    "User-Agent": "MUSIA-Client/3.0",
+                    "Accept": "image/png, image/*",
+                }
+                resp = requests.post(url, json=payload, headers=headers, timeout=120)
+                if resp.status_code == 200 and (resp.content.startswith(b"\x89PNG") or "image" in resp.headers.get("Content-Type", "")):
+                    import base64
+                    b64_data = base64.b64encode(resp.content).decode("utf-8")
+                    data_url = f"data:image/png;base64,{b64_data}"
 
-                # Try saving locally if directory is writable (e.g. local environment)
-                try:
-                    dest_path = os.path.join(OUTPUT_DIR, f"scene_{scene_id}.png")
-                    with open(dest_path, "wb") as f:
-                        f.write(resp.content)
-                except Exception:
-                    pass
+                    # Try saving locally if directory is writable (e.g. local environment)
+                    try:
+                        dest_path = os.path.join(OUTPUT_DIR, f"scene_{scene_id}.png")
+                        with open(dest_path, "wb") as f:
+                            f.write(resp.content)
+                    except Exception:
+                        pass
 
-                print(f"[OK] Scene {scene_id} generated via Colab GPU! ({len(resp.content)} bytes)")
-                return data_url
+                    print(f"[OK] Scene {scene_id} generated via Colab GPU! ({len(resp.content)} bytes)")
+                    return data_url
+                else:
+                    print(f"[WARN] Colab endpoint returned HTTP {resp.status_code}: {resp.text[:200]}")
             else:
-                print(f"[WARN] Colab endpoint returned HTTP {resp.status_code}: {resp.text[:200]}")
+                print(f"[INFO] Colab tunnel health check returned HTTP {ping_resp.status_code} - using local fallback.")
         except Exception as e:
-            print(f"[INFO] Remote GPU tunnel error ({e}) - attempting local illustration fallback.")
+            print(f"[INFO] Remote GPU tunnel offline or error ({e}) - executing local illustration fallback.")
 
     # 2. Local High-Fidelity Generation using trained PQC features
     from PIL import Image, ImageDraw, ImageFont

@@ -21,8 +21,77 @@ from .quantum_pipeline import (
 )
 from .story_parser import detect_language, normalize_multilingual_text
 
-# Active Google Colab ngrok tunnel URL (can be overridden via COLAB_NGROK_URL env var)
+# Active Google Colab ngrok tunnel URL (can be overridden via COLAB_NGROK_URL env var or at runtime)
 COLAB_NGROK_URL = os.environ.get("COLAB_NGROK_URL", "https://carnation-dislike-nervous.ngrok-free.dev")
+
+
+def get_colab_url() -> str:
+    """Return the currently configured Colab ngrok tunnel URL."""
+    global COLAB_NGROK_URL
+    return COLAB_NGROK_URL
+
+
+def set_colab_url(new_url: str) -> str:
+    """Dynamically update the active Colab ngrok tunnel URL."""
+    global COLAB_NGROK_URL
+    if new_url:
+        COLAB_NGROK_URL = new_url.strip().rstrip("/")
+    return COLAB_NGROK_URL
+
+
+def ping_colab_tunnel(url: Optional[str] = None, timeout: float = 3.5) -> dict:
+    """
+    Pings the Colab GPU tunnel /health endpoint with ngrok-skip-browser-warning.
+    Returns status dict with latency, device info, and error message if offline.
+    """
+    target = (url or COLAB_NGROK_URL).strip().rstrip("/")
+    if not target or target.startswith("https://your-"):
+        return {
+            "configured": False,
+            "url": target,
+            "online": False,
+            "error": "Colab ngrok URL not configured."
+        }
+
+    import time
+    start_t = time.time()
+    headers = {
+        "ngrok-skip-browser-warning": "true",
+        "User-Agent": "MUSIA-Client/3.0",
+        "Accept": "application/json",
+    }
+    try:
+        health_url = f"{target}/health"
+        resp = requests.get(health_url, headers=headers, timeout=timeout)
+        latency_ms = int((time.time() - start_t) * 1000)
+        if resp.status_code == 200:
+            data = resp.json() if resp.headers.get("Content-Type", "").startswith("application/json") else {}
+            return {
+                "configured": True,
+                "url": target,
+                "online": True,
+                "latency_ms": latency_ms,
+                "device": data.get("device", "cuda"),
+                "pqc_loaded": data.get("pqc_loaded", True),
+                "lora_loaded": data.get("lora_loaded", True),
+                "error": None
+            }
+        else:
+            return {
+                "configured": True,
+                "url": target,
+                "online": False,
+                "latency_ms": latency_ms,
+                "error": f"Colab returned HTTP {resp.status_code}"
+            }
+    except Exception as exc:
+        return {
+            "configured": True,
+            "url": target,
+            "online": False,
+            "latency_ms": int((time.time() - start_t) * 1000),
+            "error": f"Colab tunnel offline or unreachable: {str(exc)}"
+        }
 
 
 def generate_scene_image(scene_prompt: str, scene_id: int, use_quantum: bool = True) -> str:
@@ -48,7 +117,7 @@ def generate_scene_image(scene_prompt: str, scene_id: int, use_quantum: bool = T
         scene_prompt=scene_prompt,
         scene_id=scene_id,
         use_quantum=use_quantum,
-        colab_url=COLAB_NGROK_URL,
+        colab_url=get_colab_url(),
     )
 
 

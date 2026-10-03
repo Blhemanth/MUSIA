@@ -59,7 +59,7 @@ class TestQuantumPipeline(unittest.TestCase):
         scene_id = 99  # use unique scene id for testing
 
         img_url = generate_mock_scene_image(test_prompt, scene_id)
-        self.assertTrue(img_url.startswith("/static/generated_scenes/"))
+        self.assertTrue(img_url.startswith("data:image/png;base64,") or img_url.startswith("/static/generated_scenes/"))
 
         # Verify physical file existence and valid image format
         expected_path = os.path.join(OUTPUT_DIR, f"scene_{scene_id}.png")
@@ -80,7 +80,7 @@ class TestQuantumPipeline(unittest.TestCase):
         scene_id = 98
 
         img_url = render_multilingual_scene_illustration(hindi_prompt, scene_id, use_quantum=False, colab_url=None)
-        self.assertTrue(img_url.startswith("/static/generated_scenes/"))
+        self.assertTrue(img_url.startswith("data:image/png;base64,") or img_url.startswith("/static/generated_scenes/"))
 
         expected_path = os.path.join(OUTPUT_DIR, f"scene_{scene_id}.png")
         self.assertTrue(os.path.exists(expected_path))

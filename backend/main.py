@@ -8,11 +8,12 @@ Phase 2+: FastAPI Backend Server — Multilingual Processing (English, Hindi, Be
 import os
 import asyncio
 
+from typing import Optional
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from .story_parser import (
     parse_story_to_scenes,
@@ -20,7 +21,13 @@ from .story_parser import (
     detect_language,
     normalize_multilingual_text,
 )
-from .generate_on_colab import generate_scene_image, generate_mock_scene_image
+from .generate_on_colab import (
+    generate_scene_image,
+    generate_mock_scene_image,
+    get_colab_url,
+    set_colab_url,
+    ping_colab_tunnel,
+)
 from .quantum_pipeline import weight_manager
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -92,13 +99,15 @@ generation_status: dict = {
 # ---------------------------------------------------------------------------
 
 class StoryRequest(BaseModel):
-    story: str
+    story: str = Field(..., max_length=5000, description="Raw story text, capped at 5000 characters.")
 
     @field_validator("story")
     @classmethod
     def story_must_not_be_empty(cls, v: str) -> str:
         if not v or not v.strip():
             raise ValueError("The 'story' field must not be empty.")
+        if len(v.strip()) > 5000:
+            raise ValueError("Story exceeds maximum allowed length of 5,000 characters.")
         return v.strip()
 
 
@@ -122,9 +131,22 @@ class GenerationRequest(BaseModel):
 
 class SingleSceneRequest(BaseModel):
     """Body for /api/generate-scene."""
-    scene_prompt: str
+    scene_prompt: str = Field(..., min_length=1, max_length=1500)
     scene_id: int = 1
     model: str = "quantum"
+    seed: Optional[int] = None
+
+
+class ColabConfigRequest(BaseModel):
+    """Body for /api/config."""
+    colab_url: str = Field(..., max_length=500)
+
+
+class CompareSceneRequest(BaseModel):
+    """Body for /api/compare-scene."""
+    scene_prompt: str = Field(..., min_length=1, max_length=1500)
+    scene_id: int = 1
+    seed: Optional[int] = None
 
 
 # ---------------------------------------------------------------------------
@@ -379,6 +401,37 @@ async def stop_generation():
     }
 
 
+@app.get("/api/status", summary="Honest system & GPU tunnel status")
+async def get_system_status():
+    """
+    Actively queries the backend state and pings the configured Google Colab
+    GPU tunnel /health endpoint with ngrok-skip-browser-warning to report
+    true connectivity, GPU device, and latency without false claims.
+    """
+    colab_info = await asyncio.to_thread(ping_colab_tunnel)
+    return {
+        "status": "online",
+        "backend": "online",
+        "pqc_model_loaded": weight_manager.is_pqc_loaded,
+        "lora_adapter_available": weight_manager.has_lora_adapter,
+        "device": weight_manager.device,
+        "colab": colab_info,
+        "supported_languages": ["English", "Hindi (Devanagari)", "Bengali (Bangla)"],
+    }
+
+
+@app.post("/api/config", summary="Update Colab ngrok tunnel URL")
+async def update_colab_config(config: ColabConfigRequest):
+    """Dynamically configure the active Google Colab ngrok tunnel URL and immediately test it."""
+    url = set_colab_url(config.colab_url)
+    ping_result = await asyncio.to_thread(ping_colab_tunnel, url)
+    return {
+        "status": "updated",
+        "colab_url": url,
+        "colab": ping_result,
+    }
+
+
 @app.post("/api/generate-scene", summary="Directly generate a single scene illustration")
 async def generate_single_scene(request: SingleSceneRequest):
     """
@@ -389,6 +442,10 @@ async def generate_single_scene(request: SingleSceneRequest):
     use_quantum = request.model == "quantum"
     is_mock = request.model == "mock"
     try:
+        clean_text = normalize_multilingual_text(request.scene_prompt)
+        detected_lang = detect_language(clean_text)
+        _, diag = weight_manager.enhance_features(clean_text, use_quantum=use_quantum)
+
         if is_mock:
             image_url = await asyncio.to_thread(
                 generate_mock_scene_image, request.scene_prompt, request.scene_id
@@ -397,7 +454,51 @@ async def generate_single_scene(request: SingleSceneRequest):
             image_url = await asyncio.to_thread(
                 generate_scene_image, request.scene_prompt, request.scene_id, use_quantum
             )
-        return {"status": "success", "scene_id": request.scene_id, "image_url": image_url}
+        return {
+            "status": "success",
+            "scene_id": request.scene_id,
+            "image_url": image_url,
+            "quantum_diagnostics": diag,
+            "detected_language": detected_lang,
+            "model": request.model,
+        }
     except Exception as exc:
         print(f"[ERR] Error generating scene {request.scene_id}: {exc}")
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.post("/api/compare-scene", summary="Side-by-side Quantum vs Standard comparison")
+async def compare_scene(request: CompareSceneRequest):
+    """
+    Generates both Quantum-Enhanced and Standard SDXL scene illustrations
+    using the same prompt to demonstrate the visual and Hilbert space differentiator.
+    """
+    try:
+        clean_text = normalize_multilingual_text(request.scene_prompt)
+        detected_lang = detect_language(clean_text)
+        _, quantum_diag = weight_manager.enhance_features(clean_text, use_quantum=True)
+        _, standard_diag = weight_manager.enhance_features(clean_text, use_quantum=False)
+
+        quantum_img = await asyncio.to_thread(
+            generate_scene_image, request.scene_prompt, request.scene_id, True
+        )
+        standard_img = await asyncio.to_thread(
+            generate_scene_image, request.scene_prompt, request.scene_id + 100, False
+        )
+
+        return {
+            "status": "success",
+            "scene_prompt": request.scene_prompt,
+            "detected_language": detected_lang,
+            "quantum": {
+                "image_url": quantum_img,
+                "diagnostics": quantum_diag,
+            },
+            "standard": {
+                "image_url": standard_img,
+                "diagnostics": standard_diag,
+            }
+        }
+    except Exception as exc:
+        print(f"[ERR] Error in comparison: {exc}")
         raise HTTPException(status_code=500, detail=str(exc))

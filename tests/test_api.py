@@ -141,6 +141,63 @@ class TestFastAPIEndpoints(unittest.IsolatedAsyncioTestCase):
         stop_res = await self.client.post("/api/stop-generation")
         self.assertEqual(stop_res.status_code, 200)
 
+    async def test_system_status_honest_check(self):
+        """Test GET /api/status returns honest backend and Colab tunnel status."""
+        response = await self.client.get("/api/status")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data.get("backend"), "online")
+        self.assertIn("colab", data)
+        self.assertIn("online", data["colab"])
+
+    async def test_colab_config_update(self):
+        """Test POST /api/config dynamically configures ngrok tunnel."""
+        test_url = "https://musia-test-session.ngrok-free.dev"
+        response = await self.client.post("/api/config", json={"colab_url": test_url})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data.get("colab_url"), test_url)
+        self.assertIn("colab", data)
+
+    async def test_generate_single_scene_with_diagnostics(self):
+        """Test POST /api/generate-scene returns quantum diagnostics and language."""
+        response = await self.client.post(
+            "/api/generate-scene",
+            json={
+                "scene_prompt": "A futuristic observatory surrounded by quantum nebulas.",
+                "scene_id": 1,
+                "model": "mock"
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["status"], "success")
+        self.assertIn("image_url", data)
+        self.assertIn("quantum_diagnostics", data)
+        self.assertIn("detected_language", data)
+
+    async def test_compare_scene_endpoint(self):
+        """Test POST /api/compare-scene returns side-by-side quantum and standard data."""
+        response = await self.client.post(
+            "/api/compare-scene",
+            json={
+                "scene_prompt": "Crystal spires reflecting turquoise cosmic auroras.",
+                "scene_id": 1
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["status"], "success")
+        self.assertIn("quantum", data)
+        self.assertIn("standard", data)
+        self.assertIn("diagnostics", data["quantum"])
+
+    async def test_story_exceeds_max_length_rejected(self):
+        """Test POST /api/parse-story with > 5000 chars is rejected with 422."""
+        huge_story = "A" * 5500
+        response = await self.client.post("/api/parse-story", json={"story": huge_story})
+        self.assertEqual(response.status_code, 422)
+
 
 if __name__ == "__main__":
     unittest.main()
