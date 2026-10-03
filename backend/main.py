@@ -536,15 +536,16 @@ async def generate_single_scene(request: SingleSceneRequest):
 
         if is_mock:
             image_url = await asyncio.to_thread(
-                generate_mock_scene_image, request.scene_prompt, request.scene_id
+                generate_mock_scene_image, request.scene_prompt, request.scene_id, request.seed
             )
         else:
             image_url = await asyncio.to_thread(
-                generate_scene_image, request.scene_prompt, request.scene_id, use_quantum
+                generate_scene_image, request.scene_prompt, request.scene_id, use_quantum, request.seed
             )
         return {
             "status": "success",
             "scene_id": request.scene_id,
+            "seed": request.seed,
             "image_url": image_url,
             "quantum_diagnostics": diag,
             "detected_language": detected_lang,
@@ -568,15 +569,16 @@ async def compare_scene(request: CompareSceneRequest):
         _, standard_diag = weight_manager.enhance_features(clean_text, use_quantum=False)
 
         quantum_img = await asyncio.to_thread(
-            generate_scene_image, request.scene_prompt, request.scene_id, True
+            generate_scene_image, request.scene_prompt, request.scene_id, True, request.seed
         )
         standard_img = await asyncio.to_thread(
-            generate_scene_image, request.scene_prompt, request.scene_id + 100, False
+            generate_scene_image, request.scene_prompt, request.scene_id + 100, False, request.seed
         )
 
         return {
             "status": "success",
             "scene_prompt": request.scene_prompt,
+            "seed": request.seed,
             "detected_language": detected_lang,
             "quantum": {
                 "image_url": quantum_img,

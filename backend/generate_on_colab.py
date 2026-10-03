@@ -98,7 +98,7 @@ def ping_colab_tunnel(url: Optional[str] = None, timeout: float = 3.5) -> dict:
         }
 
 
-def generate_scene_image(scene_prompt: str, scene_id: int, use_quantum: bool = True) -> str:
+def generate_scene_image(scene_prompt: str, scene_id: int, use_quantum: bool = True, seed: Optional[int] = None) -> str:
     """
     Executes the scene illustration generation pipeline utilizing the trained
     model weights (Standard SDXL and Quantum-Enhanced 4-8 qubit PQC models):
@@ -106,40 +106,44 @@ def generate_scene_image(scene_prompt: str, scene_id: int, use_quantum: bool = T
        and quantum parameters to the cloud GPU.
     2. If the tunnel is offline or in local environment, executes the local
        quantum latent pipeline with the trained PQC enhancer (`best_pqc_enhancer_fulldataset.pt`)
-       and renders high-fidelity multilingual cinematic frames in Hindi, Bengali, or English.
+       and renders high-fidelity multilingual cinematic frames in Hindi, Bengali, Tamil, Kannada, or English.
 
     Args:
         scene_prompt: Cinematic prompt text for this scene.
         scene_id: 1-based sequential scene index.
         use_quantum: True for Quantum-Enhanced PQC model, False for Standard SDXL.
+        seed: Optional RNG seed for deterministic frame recreation.
 
     Returns:
-        Relative URL string (e.g. '/static/generated_scenes/scene_1.png')
+        Relative URL string or data URL.
     """
-    print(f"[SCENE] Processing scene {scene_id} | Quantum: {use_quantum} | Model weights: PQC={weight_manager.is_pqc_loaded}")
+    print(f"[SCENE] Processing scene {scene_id} | Quantum: {use_quantum} | Seed: {seed} | Model weights: PQC={weight_manager.is_pqc_loaded}")
     return render_multilingual_scene_illustration(
         scene_prompt=scene_prompt,
         scene_id=scene_id,
         use_quantum=use_quantum,
         colab_url=get_colab_url(),
+        seed=seed,
     )
 
 
-def generate_mock_scene_image(scene_prompt: str, scene_id: int) -> str:
+def generate_mock_scene_image(scene_prompt: str, scene_id: int, seed: Optional[int] = None) -> str:
     """
-    Rapid preview illustration generator supporting English, Hindi, and Bengali
-    text. Generates an instant preview without GPU delays.
+    Rapid preview illustration generator supporting English, Hindi, Bengali,
+    Tamil, and Kannada text. Generates an instant preview without GPU delays.
 
     Args:
         scene_prompt: Cinematic prompt string for this scene.
         scene_id: 1-based scene index.
+        seed: Optional RNG seed.
 
     Returns:
-        Relative HTTP URL: '/static/generated_scenes/scene_<scene_id>.png'
+        Relative HTTP URL or data URL.
     """
     return render_multilingual_scene_illustration(
         scene_prompt=scene_prompt,
         scene_id=scene_id,
         use_quantum=False,
         colab_url=None,  # Force local preview rendering
+        seed=seed,
     )

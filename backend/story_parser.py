@@ -31,20 +31,26 @@ from typing import List, Dict, Any, Optional
 
 DEVANAGARI_RANGE = (0x0900, 0x097F)
 BENGALI_RANGE    = (0x0980, 0x09FF)
+TAMIL_RANGE      = (0x0B80, 0x0BFF)
+KANNADA_RANGE    = (0x0C80, 0x0CFF)
 
 
 def detect_language(text: str) -> str:
     """
     Detect the primary language/script of the input text.
-    Returns: 'hi' (Hindi), 'bn' (Bengali), 'en' (English), or 'mixed'.
+    Returns: 'hi' (Hindi), 'bn' (Bengali), 'ta' (Tamil), 'kn' (Kannada), 'en' (English), or 'mixed'.
     """
-    counts = {"hi": 0, "bn": 0, "en": 0}
+    counts = {"hi": 0, "bn": 0, "ta": 0, "kn": 0, "en": 0}
     for char in text:
         cp = ord(char)
         if DEVANAGARI_RANGE[0] <= cp <= DEVANAGARI_RANGE[1]:
             counts["hi"] += 1
         elif BENGALI_RANGE[0] <= cp <= BENGALI_RANGE[1]:
             counts["bn"] += 1
+        elif TAMIL_RANGE[0] <= cp <= TAMIL_RANGE[1]:
+            counts["ta"] += 1
+        elif KANNADA_RANGE[0] <= cp <= KANNADA_RANGE[1]:
+            counts["kn"] += 1
         elif (65 <= cp <= 90) or (97 <= cp <= 122):
             counts["en"] += 1
 
@@ -53,7 +59,7 @@ def detect_language(text: str) -> str:
         return "en"
 
     primary_lang, max_count = max(counts.items(), key=lambda item: item[1])
-    if max_count / total >= 0.60:
+    if max_count / total >= 0.50:
         return primary_lang
     return "mixed"
 
@@ -74,11 +80,12 @@ MULTILINGUAL_ABBREVIATIONS = [
     "ইত্যাদি.", "নং.", "পৃ."
 ]
 
-# Multilingual Chapter & Section Header Patterns
 _CHAPTER_PATTERN = re.compile(
     r"^\s*(?:(?:chapter|part|section|scene|act|prologue|epilogue)\b[^\n:]*|"
     r"(?:अध्याय|भाग|दृश्य|खंड|अंक|प्रस्तावना|उपसंहार)[^\n:]*|"
-    r"(?:অধ্যায়|পর্ব|বিভাগ|দৃশ্য|অঙ্ক|ভূমিকা|উপসংহার)[^\n:]*)",
+    r"(?:অধ্যায়|পর্ব|বিভাগ|দৃশ্য|অঙ্ক|ভূমিকা|উপসংহার)[^\n:]*|"
+    r"(?:அத்தியாயம்|பகுதி|காட்சி|பாகம்)[^\n:]*|"
+    r"(?:ಅಧ್ಯಾಯ|ಭಾಗ|ದೃಶ್ಯ|ಕಾಂಡ)[^\n:]*)",
     re.IGNORECASE | re.MULTILINE,
 )
 
@@ -299,7 +306,7 @@ def parse_story_scenes_detailed(full_story: str, sentences_per_scene: int = 3) -
             "scene_id": idx,
             "scene_title": f"Scene {idx}",
             "language": lang,
-            "language_name": {"en": "English", "hi": "Hindi (Devanagari)", "bn": "Bengali (Bangla)", "mixed": "Multilingual"}.get(lang, "English"),
+            "language_name": {"en": "English", "hi": "Hindi (Devanagari)", "bn": "Bengali (Bangla)", "ta": "Tamil (தமிழ்)", "kn": "Kannada (ಕನ್ನಡ)", "mixed": "Multilingual"}.get(lang, "English"),
             "raw_text": raw_scene_text,
             "prompt": prompt,
             "token_count": len(tokens),

@@ -287,13 +287,14 @@ def render_multilingual_scene_illustration(
     scene_id: int,
     use_quantum: bool = True,
     colab_url: Optional[str] = None,
+    seed: Optional[int] = None,
 ) -> str:
     """
     Renders the sequential scene illustration.
     1. First attempts remote generation if an active Google Colab tunnel is configured.
     2. Falls back to generating a high-fidelity cinematic illustration locally that:
        - Uses trained PQC features & quantum expectation values
-       - Renders accurate native typography in Hindi, Bengali, and English using Nirmala UI
+       - Renders accurate native typography in Hindi, Bengali, Tamil, Kannada, and English using Nirmala UI
        - Adds cinematic atmospheric color-grading and director's HUD framing
        - Saves sequentially to backend/static/generated_scenes/scene_{scene_id}.png
     """
@@ -326,8 +327,10 @@ def render_multilingual_scene_illustration(
                 payload = {
                     "prompt": short_prompt,
                     "use_quantum": use_quantum,
-                    "scene_id": scene_id
+                    "scene_id": scene_id,
                 }
+                if seed is not None:
+                    payload["seed"] = seed
                 headers = dict(base_headers)
                 headers["Accept"] = "image/png, image/*"
                 resp = requests.post(url, json=payload, headers=headers, timeout=120)
@@ -369,8 +372,9 @@ def render_multilingual_scene_illustration(
 
     W, H = 1024, 576  # 16:9 Director's Aspect Ratio
 
-    # Deterministic palette influenced by prompt & quantum state
-    p_hash = hashlib.sha256(short_prompt.encode("utf-8")).hexdigest()
+    # Deterministic palette influenced by prompt, quantum state & optional seed
+    seed_suffix = f"__seed_{seed}" if seed is not None else ""
+    p_hash = hashlib.sha256((short_prompt + seed_suffix).encode("utf-8")).hexdigest()
     q_shift = int(abs(sum(q_vals)) * 40)
 
     r1 = (int(p_hash[0:2], 16) + q_shift) % 40 + 4

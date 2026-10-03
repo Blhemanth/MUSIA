@@ -291,6 +291,47 @@
       scroll-snap-align: start;
     }
 
+    /* ── Printable Storyboard PDF Sheet ── */
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #0f172a !important;
+      }
+      #background-canvas, #navbar, #control-panel, #toast,
+      #compare-modal, #edit-scene-modal, #how-modal, #cinema-modal,
+      #settings-modal, .no-print, button, #download-master-container,
+      #btn-toggle-view, #fx-preset-select, select, header {
+        display: none !important;
+      }
+      #main-content {
+        display: block !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+      }
+      #gallery-panel {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      #gallery-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 1.5rem !important;
+      }
+      .cinematic-card {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        background: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #0f172a !important;
+        box-shadow: none !important;
+      }
+      .cinematic-card p {
+        color: #334155 !important;
+      }
+    }
+
     /* ── Spinners & Orbs ── */
     .quantum-loader {
       position: relative;
@@ -503,43 +544,79 @@
             </span>
             <h2 class="font-bold text-xs uppercase tracking-widest text-slate-200">Prose Script Input</h2>
           </div>
-          <div class="flex items-center gap-1.5">
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span class="text-[11px] text-slate-400 font-medium mr-1">Load Sample:</span>
             <button id="btn-load-sample" onclick="loadSampleStory('en')"
-                    class="btn-subtle text-xs px-2.5 py-1 rounded-md text-cyan-400 hover:text-cyan-300 font-medium">
-              Sample (EN)
+                    class="btn-subtle text-[11px] px-2 py-0.5 rounded-md text-cyan-400 hover:text-cyan-300 font-medium">
+              English
             </button>
             <button onclick="loadSampleStory('hi')"
-                    class="btn-subtle text-xs px-2 py-1 rounded-md text-teal-400 hover:text-teal-300 font-medium">
+                    class="btn-subtle text-[11px] px-2 py-0.5 rounded-md text-teal-400 hover:text-teal-300 font-medium">
               हिन्दी
             </button>
+            <button onclick="loadSampleStory('kn')"
+                    class="btn-subtle text-[11px] px-2 py-0.5 rounded-md text-amber-400 hover:text-amber-300 font-medium">
+              ಕನ್ನಡ
+            </button>
+            <button onclick="loadSampleStory('ta')"
+                    class="btn-subtle text-[11px] px-2 py-0.5 rounded-md text-pink-400 hover:text-pink-300 font-medium">
+              தமிழ்
+            </button>
             <button onclick="loadSampleStory('bn')"
-                    class="btn-subtle text-xs px-2 py-1 rounded-md text-purple-400 hover:text-purple-300 font-medium">
+                    class="btn-subtle text-[11px] px-2 py-0.5 rounded-md text-purple-400 hover:text-purple-300 font-medium">
               বাংলা
             </button>
-            <button id="btn-clear" onclick="clearStory()"
-                    class="btn-subtle text-xs px-2 py-1 rounded-md text-slate-300 hover:text-red-400 font-medium">
-              Clear
+            <button id="btn-clear" onclick="clearSavedWork()"
+                    title="Clear story, scenes, and cached frame thumbnails"
+                    class="btn-subtle text-[11px] px-2 py-0.5 rounded-md text-slate-300 hover:text-red-400 font-medium border border-red-500/20">
+              Clear Saved Work
             </button>
           </div>
         </div>
 
-        <!-- Detected Language Indicator Banner -->
-        <div id="lang-detection-banner" class="hidden mb-2.5 px-3 py-1.5 rounded-lg bg-cosmos-900 border border-cyan-500/30 flex items-center justify-between text-xs">
+        <!-- Language Selector & Controls Row -->
+        <div class="mb-3 flex items-center justify-between gap-2 flex-wrap">
           <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
-            <span class="text-slate-300">Language Detected: <strong id="detected-lang-label" class="text-cyan-300 font-mono">English</strong></span>
+            <label for="language-select" class="text-xs text-slate-300 font-medium flex items-center gap-1">
+              <span aria-hidden="true">🌐</span> Language Mode:
+            </label>
+            <select id="language-select" onchange="onLanguageModeChange(this.value)"
+                    aria-label="Language Mode Selector"
+                    class="rounded-lg bg-cosmos-900 border border-indigo-500/30 text-xs text-cyan-300 py-1 px-2.5 font-mono focus:outline-none focus:border-cyan-400">
+              <option value="auto" selected>Auto-Detect (NLP)</option>
+              <option value="en">English (Latin)</option>
+              <option value="hi">हिन्दी (Devanagari)</option>
+              <option value="kn">ಕನ್ನಡ (Kannada)</option>
+              <option value="ta">தமிழ் (Tamil)</option>
+              <option value="bn">বাংলা (Bengali)</option>
+            </select>
           </div>
-          <span id="detected-script-badge" class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-500/30">Latin Script</span>
+          <span id="detected-script-badge" class="hidden text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-500/30">Latin Script</span>
+        </div>
+
+        <!-- Detected Language Indicator Banner & Collapsible Prompt Preview -->
+        <div id="lang-detection-banner" class="hidden mb-2.5 rounded-lg bg-cosmos-900 border border-cyan-500/30 text-xs overflow-hidden">
+          <div class="px-3 py-1.5 flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+              <span class="text-slate-300">Detected: <strong id="detected-lang-label" class="text-cyan-300 font-mono">English</strong></span>
+            </div>
+            <button type="button" onclick="toggleNormalizedPromptPreview()" class="text-[11px] text-cyan-400 hover:text-cyan-200 font-mono flex items-center gap-1">
+              <span id="toggle-prompt-label">Show Normalized Prompt</span>
+              <svg id="toggle-prompt-icon" class="w-3 h-3 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/></svg>
+            </button>
+          </div>
+          <div id="normalized-prompt-preview" class="hidden p-2.5 bg-cosmos-950 border-t border-cyan-500/20 font-mono text-[10px] text-slate-300 leading-relaxed max-h-32 overflow-y-auto"></div>
         </div>
 
         <label for="story-input" class="sr-only">Story Narrative Script</label>
-        <textarea id="story-input" rows="7" maxlength="4000"
+        <textarea id="story-input" rows="7" maxlength="5000"
                   class="w-full rounded-xl p-4 text-sm font-normal leading-relaxed placeholder-slate-500 focus:ring-0 focus-visible:ring-2 focus-visible:ring-cyan-400"
-                  placeholder="Paste or write your story narrative here (English, Hindi, or Bengali). The parser detects narrative scene shifts and splits on full stops or Purna Viram (।).&#10;&#10;Max 4,000 characters to prevent GPU runaway execution."></textarea>
+                  placeholder="Paste or write your story narrative here (English, Hindi, Kannada, Tamil, or Bengali). The parser detects narrative scene shifts and splits on full stops or Purna Viram (।).&#10;&#10;Max 5,000 characters to prevent GPU runaway execution."></textarea>
 
         <!-- Script Metrics Counter & Capping -->
         <div class="flex justify-between items-center mt-2.5 pt-2 border-t border-white/[0.06]">
-          <span id="char-count" class="text-[11px] text-slate-300 font-mono">0 / 4,000 characters</span>
+          <span id="char-count" class="text-[11px] text-slate-300 font-mono">0 / 5,000 characters</span>
           <span class="text-[11px] text-slate-300">≈ <span id="word-count" class="text-cyan-400 font-semibold font-mono">0</span> words</span>
         </div>
 
@@ -668,8 +745,9 @@
         <div class="mt-4 pt-3 border-t border-white/[0.06]">
           <div class="flex items-center justify-between text-xs mb-2">
             <span id="status-text" class="font-medium text-slate-200">Ready — awaiting narrative parsing.</span>
-            <div class="flex items-center gap-2 font-mono">
+            <div class="flex items-center gap-2.5 font-mono">
               <span id="timer-display" class="text-slate-400 text-[11px] hidden">00:00</span>
+              <span id="eta-display" class="hidden text-cyan-400 text-[11px] px-2 py-0.5 rounded bg-cyan-950/60 border border-cyan-500/30">ETA: ~0s</span>
               <span id="progress-fraction" class="text-cyan-400 font-bold">0 / 0</span>
             </div>
           </div>
@@ -691,7 +769,7 @@
             </div>
             <div class="overflow-hidden">
               <p id="status-scene-text" class="text-xs font-bold text-cyan-300 truncate">Synthesizing Scene...</p>
-              <p id="status-subtext" class="text-[11px] text-slate-300 mt-0.5 truncate">Streaming latent tensors through Google Colab ngrok tunnel...</p>
+              <p id="status-subtext" class="text-[11px] text-slate-300 mt-0.5 truncate">Rendering frame 1 of 1…</p>
             </div>
           </div>
         </div>
@@ -723,35 +801,56 @@
 
           <div class="flex flex-wrap items-center gap-2 sm:gap-3">
             <!-- Shader Transition Selector with Explanatory Tooltip -->
-            <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cosmos-900 border border-indigo-500/30 text-xs"
-                 title="Choose shader reveal effect for inspecting frames">
-              <label for="fx-preset-select" class="text-[10px] uppercase font-mono text-cyan-400 font-semibold tracking-wider">FX:</label>
-              <select id="fx-preset-select" aria-label="Shader transition preset"
-                      class="bg-transparent text-slate-200 text-xs font-mono font-medium focus:outline-none cursor-pointer">
-                <option value="pixels-organic" class="bg-cosmos-950 text-cyan-300" selected>pixels-organic (Voronoi Noise)</option>
-                <option value="pixels-mechanic" class="bg-cosmos-950 text-indigo-300">pixels-mechanic (Glitch Grid)</option>
-                <option value="sweep-gradient" class="bg-cosmos-950 text-fuchsia-300">sweep-gradient (Laser Wipe)</option>
-              </select>
+            <div class="flex flex-col items-start gap-1">
+              <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cosmos-900 border border-indigo-500/30 text-xs"
+                   title="Choose WebGL shader reveal transition preset for inspecting frames">
+                <label for="fx-preset-select" class="text-[10px] uppercase font-mono text-cyan-400 font-semibold tracking-wider">FX:</label>
+                <select id="fx-preset-select" aria-label="Shader transition preset"
+                        onchange="updateFxDescription(this.value)"
+                        class="bg-transparent text-slate-200 text-xs font-mono font-medium focus:outline-none cursor-pointer">
+                  <option value="pixels-organic" class="bg-cosmos-950 text-cyan-300" selected>pixels-organic (Voronoi Coherence)</option>
+                  <option value="pixels-mechanic" class="bg-cosmos-950 text-indigo-300">pixels-mechanic (Voxel Glitch Grid)</option>
+                  <option value="sweep-gradient" class="bg-cosmos-950 text-fuchsia-300">sweep-gradient (Spectral Laser Wipe)</option>
+                </select>
+              </div>
+              <span id="fx-explainer-text" class="text-[9px] text-slate-400 font-mono hidden md:inline px-1">Voronoi bio-matrix dissolve revealing quantum coherence.</span>
             </div>
 
             <!-- View Mode Toggle (Grid vs Filmstrip) -->
             <button id="btn-toggle-view" onclick="toggleGalleryView()" title="Toggle Grid / Cinematic Filmstrip View"
-                    class="btn-subtle text-xs px-2.5 py-1 rounded-lg text-slate-300 hover:text-cyan-300 font-mono flex items-center gap-1">
+                    class="btn-subtle text-xs px-2.5 py-1.5 rounded-lg text-slate-300 hover:text-cyan-300 font-mono flex items-center gap-1">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z"/>
               </svg>
               <span id="view-mode-label" class="hidden sm:inline">Filmstrip</span>
             </button>
 
-            <!-- Export Full Storyboard ZIP Button -->
-            <button id="btn-export-zip" onclick="exportStoryboardZip()" disabled
-                    title="Export ZIP with all rendered frames and JSON prompts metadata"
-                    class="btn-subtle text-xs px-3 py-1 rounded-lg text-teal-300 hover:text-teal-200 border border-teal-500/30 flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/>
-              </svg>
-              <span>Export ZIP</span>
-            </button>
+            <!-- Download Master Export Dropdown -->
+            <div class="relative inline-block text-left" id="download-master-container">
+              <button id="btn-download-master" onclick="toggleDownloadMasterMenu()" disabled
+                      aria-disabled="true"
+                      title="Generate at least one frame to export master storyboard"
+                      class="btn-quantum-action text-xs px-3.5 py-1.5 rounded-lg text-cosmos-950 font-bold flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed">
+                <span>Download Master</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/>
+                </svg>
+              </button>
+              <div id="download-master-menu" class="hidden absolute right-0 mt-2 w-60 rounded-xl bg-cosmos-950 border border-cyan-500/40 shadow-2xl z-30 p-1.5 space-y-1 font-mono text-xs">
+                <button onclick="exportStoryboardZip()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-cyan-500/20 text-cyan-300 flex items-center gap-2">
+                  <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                  <span>ZIP Package (PNGs)</span>
+                </button>
+                <button onclick="exportStoryboardJson()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-purple-500/20 text-purple-300 flex items-center gap-2">
+                  <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5"/></svg>
+                  <span>Scenes Data (JSON)</span>
+                </button>
+                <button onclick="printStoryboard()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-teal-500/20 text-teal-300 flex items-center gap-2">
+                  <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24-1.004-.844-1.89-1.72-2.48m13.72 2.48c.24-1.004.844-1.89 1.72-2.48M12 4.5v15m0 0 3-3m-3 3-3-3"/></svg>
+                  <span>Printable Storyboard / PDF</span>
+                </button>
+              </div>
+            </div>
 
             <span id="gallery-count" class="text-xs font-mono font-bold px-3 py-1 rounded-full bg-cosmos-900 border border-indigo-500/30 text-cyan-400 shadow-sm">
               0 frames ready
@@ -918,28 +1017,58 @@
        QUANTUM VS STANDARD COMPARISON MODAL
   ════════════════════════════════════════════ -->
   <div id="compare-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-cosmos-950/90 backdrop-blur-xl transition-all duration-300" role="dialog" aria-modal="true" aria-labelledby="compare-title">
-    <div class="relative w-full max-w-5xl bg-cosmos-900 border border-indigo-500/30 rounded-2xl overflow-hidden shadow-[0_0_60px_rgba(121,40,202,0.35)] flex flex-col max-h-[90vh]">
+    <div class="relative w-full max-w-5xl bg-cosmos-900 border border-indigo-500/30 rounded-2xl overflow-hidden shadow-[0_0_60px_rgba(121,40,202,0.35)] flex flex-col max-h-[92vh]">
       <div class="px-5 py-3.5 border-b border-white/[0.08] flex items-center justify-between bg-cosmos-950/70">
         <div class="flex items-center gap-2.5">
-          <span class="w-2.5 h-2.5 rounded-full bg-fuchsia-400 animate-pulse"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-fuchsia-400 animate-pulse" aria-hidden="true"></span>
           <h3 id="compare-title" class="text-sm font-bold text-slate-100 font-mono tracking-wide">QUANTUM VS STANDARD DIFFUSION COMPARISON</h3>
         </div>
         <button onclick="closeCompareModal()" aria-label="Close Comparison Modal" class="btn-subtle p-1.5 rounded-lg text-slate-400 hover:text-white">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
           </svg>
         </button>
       </div>
 
       <div class="p-5 overflow-y-auto space-y-4">
+        <!-- Scene prompt header -->
         <p id="compare-prompt-display" class="text-xs text-slate-200 bg-cosmos-950/80 p-3 rounded-xl border border-indigo-500/20 leading-relaxed"></p>
 
-        <!-- Side-by-Side Dual View -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Control Toolbar: Mode Switcher & Seed Control -->
+        <div class="flex items-center justify-between gap-3 flex-wrap bg-cosmos-950/90 p-2.5 rounded-xl border border-indigo-500/30 text-xs">
+          <div class="flex items-center gap-2">
+            <span class="text-slate-400 font-mono text-[11px] uppercase tracking-wider">Comparison Mode:</span>
+            <div class="inline-flex rounded-lg bg-cosmos-900 p-0.5 border border-indigo-500/30" role="tablist">
+              <button id="btn-compare-view-split" onclick="setCompareViewMode('side')" role="tab" aria-selected="true"
+                      class="px-2.5 py-1 rounded-md text-[11px] font-mono font-medium transition-colors bg-cyan-500/20 text-cyan-300">
+                Side-by-Side
+              </button>
+              <button id="btn-compare-view-slider" onclick="setCompareViewMode('slider')" role="tab" aria-selected="false"
+                      class="px-2.5 py-1 rounded-md text-[11px] font-mono font-medium transition-colors text-slate-400 hover:text-slate-200">
+                Split Slider ↔
+              </button>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <label for="compare-seed-input" class="text-slate-400 font-mono text-[11px]">Seed:</label>
+            <input type="number" id="compare-seed-input" placeholder="Random"
+                   class="w-24 bg-cosmos-900 border border-indigo-500/30 rounded px-2 py-0.5 text-cyan-300 font-mono text-xs focus:outline-none focus:border-cyan-400" />
+            <button onclick="retriggerComparison()" class="btn-subtle text-xs px-2.5 py-1 rounded text-cyan-300 hover:text-cyan-100 border border-cyan-500/30 flex items-center gap-1 font-mono">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+              <span>Re-render Both</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Mode A: Side-by-Side Dual View -->
+        <div id="compare-side-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Quantum Card -->
           <div class="rounded-xl border border-cyan-500/40 bg-cosmos-950 p-3 flex flex-col gap-2">
             <div class="flex items-center justify-between pb-2 border-b border-cyan-500/20">
-              <span class="text-xs font-mono font-bold text-cyan-300">⚛️ QUANTUM-ENHANCED PQC</span>
+              <span class="text-xs font-mono font-bold text-cyan-300 flex items-center gap-1.5">
+                <span aria-hidden="true">⚛️</span> QUANTUM-ENHANCED PQC
+              </span>
               <span class="text-[10px] font-mono text-cyan-400 bg-cyan-950 px-2 py-0.5 rounded border border-cyan-500/30">Hilbert Modulated</span>
             </div>
             <div id="compare-quantum-host" class="aspect-video rounded-lg overflow-hidden bg-cosmos-900 flex items-center justify-center">
@@ -975,7 +1104,9 @@
           <!-- Standard Card -->
           <div class="rounded-xl border border-indigo-500/40 bg-cosmos-950 p-3 flex flex-col gap-2">
             <div class="flex items-center justify-between pb-2 border-b border-indigo-500/20">
-              <span class="text-xs font-mono font-bold text-indigo-300">🎨 STANDARD SDXL DIFFUSION</span>
+              <span class="text-xs font-mono font-bold text-indigo-300 flex items-center gap-1.5">
+                <span aria-hidden="true">🎨</span> STANDARD SDXL DIFFUSION
+              </span>
               <span class="text-[10px] font-mono text-indigo-400 bg-indigo-950 px-2 py-0.5 rounded border border-indigo-500/30">Baseline Latents</span>
             </div>
             <div id="compare-standard-host" class="aspect-video rounded-lg overflow-hidden bg-cosmos-900 flex items-center justify-center">
@@ -986,6 +1117,39 @@
               <p class="text-[10px] text-slate-400">Direct SDXL CLIP embeddings without quantum harmonic rotation or entangling layers.</p>
             </div>
           </div>
+        </div>
+
+        <!-- Mode B: Draggable Interactive Split Slider View -->
+        <div id="compare-slider-container" class="hidden flex-col gap-2">
+          <div class="relative aspect-video rounded-xl overflow-hidden border border-cyan-500/40 select-none bg-cosmos-950 shadow-2xl">
+            <!-- Base Layer: Standard SDXL (Right side) -->
+            <div class="absolute inset-0 w-full h-full">
+              <div id="compare-slider-standard-host" class="w-full h-full flex items-center justify-center">
+                <span class="text-xs text-slate-400">Loading Standard Frame...</span>
+              </div>
+              <span class="absolute bottom-3 right-3 text-[11px] font-mono px-2 py-0.5 rounded bg-cosmos-950/90 border border-indigo-500/40 text-indigo-300 pointer-events-none z-10">Standard SDXL</span>
+            </div>
+            <!-- Top Layer: Quantum SDXL (Left side, clipped) -->
+            <div id="compare-slider-clip" class="absolute inset-0 w-full h-full overflow-hidden pointer-events-none" style="clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);">
+              <div id="compare-slider-quantum-host" class="w-full h-full flex items-center justify-center">
+                <span class="text-xs text-slate-400">Loading Quantum Frame...</span>
+              </div>
+              <span class="absolute bottom-3 left-3 text-[11px] font-mono px-2 py-0.5 rounded bg-cosmos-950/90 border border-cyan-500/40 text-cyan-300 pointer-events-none z-10">Quantum PQC (Enhanced)</span>
+            </div>
+            <!-- Divider Line & Handle -->
+            <div id="compare-slider-divider" class="absolute top-0 bottom-0 pointer-events-none w-0.5 bg-cyan-400 shadow-[0_0_12px_rgba(0,242,254,1)] z-10" style="left: 50%;">
+              <div class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-cyan-400 text-cosmos-950 flex items-center justify-center shadow-2xl font-bold text-xs select-none">
+                ↔
+              </div>
+            </div>
+            <!-- Interactive Draggable Range Slider Overlay -->
+            <input type="range" min="0" max="100" value="50" oninput="updateCompareSplitSlider(this.value)"
+                   class="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-20"
+                   aria-label="Comparison split slider (Drag left/right to compare Quantum vs Standard)" />
+          </div>
+          <p class="text-[10px] text-center text-slate-400 font-mono">
+            Drag the handle horizontally to inspect the quantum latent modulation differences. Left: Quantum PQC • Right: Standard SDXL.
+          </p>
         </div>
       </div>
     </div>
@@ -1034,19 +1198,163 @@
       </div>
 
       <div class="space-y-4 text-xs text-slate-300 leading-relaxed">
-        <div class="rounded-xl p-3.5 bg-cosmos-950/80 border border-indigo-500/20">
-          <h4 class="font-bold text-cyan-300 text-sm mb-1">1. Multilingual Narrative Parser</h4>
-          <p>Accepts prose in English, Hindi (Devanagari), and Bengali (Bangla). Parses grammatical boundaries including English periods and Indic Purna Viram (।) into sequential, cinematic visual scene cues.</p>
+        <!-- 4-Step Architecture Workflow -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div class="rounded-xl p-3 bg-cosmos-950/80 border border-indigo-500/20 flex flex-col gap-1">
+            <div class="flex items-center gap-1.5 text-cyan-300 font-bold font-mono text-xs">
+              <span class="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-[10px]">1</span>
+              <span>Multilingual Narrative Parser</span>
+            </div>
+            <p class="text-[11px] text-slate-400">
+              Parses prose in English, Hindi, Kannada, Tamil, and Bengali. Detects punctuation including Latin periods and Indic Purna Viram (।) into clean, sequential visual cues.
+            </p>
+          </div>
+
+          <div class="rounded-xl p-3 bg-cosmos-950/80 border border-indigo-500/20 flex flex-col gap-1">
+            <div class="flex items-center gap-1.5 text-purple-300 font-bold font-mono text-xs">
+              <span class="w-5 h-5 rounded-full bg-purple-500/20 text-purple-300 flex items-center justify-center text-[10px]">2</span>
+              <span>4-Qubit PQC Hilbert Modulation</span>
+            </div>
+            <p class="text-[11px] text-slate-400">
+              PennyLane compresses CLIP tokens into a 4-wire quantum register using AngleEmbedding and BasicEntanglerLayers, computing Pauli-Z expectations to enrich prompt latents.
+            </p>
+          </div>
+
+          <div class="rounded-xl p-3 bg-cosmos-950/80 border border-indigo-500/20 flex flex-col gap-1">
+            <div class="flex items-center gap-1.5 text-teal-300 font-bold font-mono text-xs">
+              <span class="w-5 h-5 rounded-full bg-teal-500/20 text-teal-300 flex items-center justify-center text-[10px]">3</span>
+              <span>SDXL LoRA Diffusion Bridge</span>
+            </div>
+            <p class="text-[11px] text-slate-400">
+              Modulated latents are synthesized via Google Colab GPU (or the Instant Procedural Preview fallback) applying custom LoRA cinematic film weights.
+            </p>
+          </div>
+
+          <div class="rounded-xl p-3 bg-cosmos-950/80 border border-indigo-500/20 flex flex-col gap-1">
+            <div class="flex items-center gap-1.5 text-pink-300 font-bold font-mono text-xs">
+              <span class="w-5 h-5 rounded-full bg-pink-500/20 text-pink-300 flex items-center justify-center text-[10px]">4</span>
+              <span>Director's Cut & Master Export</span>
+            </div>
+            <p class="text-[11px] text-slate-400">
+              Inspect frames through WebGL fragment shaders, execute side-by-side / split slider quantum comparisons, and export as ZIP package, JSON metadata, or printable PDF.
+            </p>
+          </div>
         </div>
 
-        <div class="rounded-xl p-3.5 bg-cosmos-950/80 border border-indigo-500/20">
-          <h4 class="font-bold text-purple-300 text-sm mb-1">2. PennyLane 4-Qubit PQC Hilbert Modulation</h4>
-          <p>Text tokens are projected into a 2048-dimensional latent space and compressed into 4 wires via AngleEmbedding. Parameterized Entangling layers rotate state vectors in Hilbert space before measuring Pauli-Z expectations, enriching textural semantics.</p>
-        </div>
+        <!-- 3 Pre-rendered Example Storyboard Outputs -->
+        <div class="pt-2 border-t border-white/[0.08]">
+          <h4 class="text-xs font-mono font-bold text-slate-200 uppercase tracking-wider mb-2.5 flex items-center gap-2">
+            <span>Pre-rendered Directorial Showcase (Offline Results)</span>
+            <span class="text-[10px] text-cyan-400 bg-cyan-950/80 border border-cyan-500/30 px-2 py-0.5 rounded font-normal">Static Showcase</span>
+          </h4>
 
-        <div class="rounded-xl p-3.5 bg-cosmos-950/80 border border-indigo-500/20">
-          <h4 class="font-bold text-teal-300 text-sm mb-1">3. Cloud SDXL + LoRA Diffusion Bridge</h4>
-          <p>Modulated embeddings are dispatched to Google Colab GPU runtime via an active ngrok tunnel. Stable Diffusion XL generates 16:9 cinematic storyboard illustrations styled by custom trained LoRA adapters.</p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <!-- Example 1: English Saturn Chrono-Observatory -->
+            <div class="rounded-xl border border-indigo-500/30 bg-cosmos-950 overflow-hidden flex flex-col shadow-lg">
+              <div class="relative aspect-video bg-gradient-to-br from-indigo-950 via-slate-900 to-cyan-950 flex items-center justify-center overflow-hidden">
+                <svg viewBox="0 0 320 180" class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="eg1-sky" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#0b0f2a"/>
+                      <stop offset="60%" stop-color="#1e1040"/>
+                      <stop offset="100%" stop-color="#06324d"/>
+                    </linearGradient>
+                    <radialGradient id="eg1-saturn" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stop-color="#ffd56b"/>
+                      <stop offset="80%" stop-color="#e2842c"/>
+                      <stop offset="100%" stop-color="#733215"/>
+                    </radialGradient>
+                  </defs>
+                  <rect width="320" height="180" fill="url(#eg1-sky)"/>
+                  <circle cx="230" cy="70" r="45" fill="url(#eg1-saturn)"/>
+                  <ellipse cx="230" cy="70" rx="75" ry="18" fill="none" stroke="#f6c065" stroke-width="4" opacity="0.75" transform="rotate(-18 230 70)"/>
+                  <!-- Observatory dome -->
+                  <path d="M 60 140 Q 110 40 160 140 Z" fill="#0f1f3d" stroke="#00f2fe" stroke-width="1.5"/>
+                  <circle cx="110" cy="95" r="14" fill="#00f2fe" opacity="0.35"/>
+                  <line x1="110" y1="95" x2="230" y2="70" stroke="#00f2fe" stroke-width="1" stroke-dasharray="3,3" opacity="0.7"/>
+                  <!-- Director HUD text -->
+                  <text x="12" y="168" fill="#00f2fe" font-size="8" font-family="monospace">SCENE 01 • QUANTUM PQC</text>
+                  <text x="250" y="168" fill="#f6c065" font-size="8" font-family="monospace">SEED: 4821</text>
+                </svg>
+                <span class="absolute top-2 left-2 text-[9px] font-mono px-1.5 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300">EN • Scene #1</span>
+              </div>
+              <div class="p-2.5">
+                <p class="text-[11px] text-slate-300 font-medium line-clamp-2">Chrono-Observatory hovering above the amber rings of Saturn, crystal dome reflecting bands of ice.</p>
+                <div class="mt-1 flex items-center justify-between text-[9px] text-slate-400 font-mono">
+                  <span>q₀:+0.72 q₁:-0.34</span>
+                  <span class="text-cyan-400 font-bold">SDXL LoRA</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Example 2: Hindi Kashi Aarti -->
+            <div class="rounded-xl border border-teal-500/30 bg-cosmos-950 overflow-hidden flex flex-col shadow-lg">
+              <div class="relative aspect-video bg-gradient-to-br from-amber-950 via-slate-900 to-indigo-950 flex items-center justify-center overflow-hidden">
+                <svg viewBox="0 0 320 180" class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="eg2-ganga" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stop-color="#141838"/>
+                      <stop offset="100%" stop-color="#3d1e10"/>
+                    </linearGradient>
+                  </defs>
+                  <rect width="320" height="180" fill="url(#eg2-ganga)"/>
+                  <!-- Steps of Ghat -->
+                  <path d="M 0 130 L 120 130 L 120 145 L 200 145 L 200 160 L 320 160 L 320 180 L 0 180 Z" fill="#2d170f" stroke="#e07a3c" stroke-width="1"/>
+                  <!-- Glowing Diyas on water -->
+                  <circle cx="80" cy="115" r="4" fill="#fbbf24"/>
+                  <circle cx="140" cy="125" r="3.5" fill="#f59e0b"/>
+                  <circle cx="220" cy="120" r="4.5" fill="#fcd34d"/>
+                  <circle cx="270" cy="110" r="3" fill="#f59e0b"/>
+                  <!-- Divine glowing boat -->
+                  <path d="M 120 110 Q 160 120 200 110 Q 185 95 135 95 Z" fill="#ffd166" opacity="0.8" stroke="#00f2fe" stroke-width="1.5"/>
+                  <text x="12" y="168" fill="#fbbf24" font-size="8" font-family="monospace">SCENE 02 • हिन्दी (HINDI)</text>
+                  <text x="250" y="168" fill="#00f2fe" font-size="8" font-family="monospace">SEED: 9104</text>
+                </svg>
+                <span class="absolute top-2 left-2 text-[9px] font-mono px-1.5 py-0.5 rounded bg-teal-950/80 border border-teal-500/40 text-teal-300">HI • Scene #2</span>
+              </div>
+              <div class="p-2.5">
+                <p class="text-[11px] text-slate-300 font-medium line-clamp-2">काशी के प्राचीन घाटों पर संध्या की आरती के दीप गंगा की लहरों पर तैर रहे थे।</p>
+                <div class="mt-1 flex items-center justify-between text-[9px] text-slate-400 font-mono">
+                  <span>q₂:+0.88 q₃:-0.15</span>
+                  <span class="text-teal-400 font-bold">Devanagari UI</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Example 3: Kannada Hampi Musical Pillars -->
+            <div class="rounded-xl border border-pink-500/30 bg-cosmos-950 overflow-hidden flex flex-col shadow-lg">
+              <div class="relative aspect-video bg-gradient-to-br from-purple-950 via-slate-900 to-pink-950 flex items-center justify-center overflow-hidden">
+                <svg viewBox="0 0 320 180" class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="eg3-sunset" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#4c1d95"/>
+                      <stop offset="50%" stop-color="#831843"/>
+                      <stop offset="100%" stop-color="#0f172a"/>
+                    </linearGradient>
+                  </defs>
+                  <rect width="320" height="180" fill="url(#eg3-sunset)"/>
+                  <!-- Pillars of Hampi Temple -->
+                  <rect x="50" y="55" width="12" height="95" fill="#2e1065" stroke="#f472b6" stroke-width="1"/>
+                  <rect x="85" y="45" width="14" height="105" fill="#3b0764" stroke="#ec4899" stroke-width="1"/>
+                  <rect x="125" y="40" width="16" height="110" fill="#4a044e" stroke="#00f2fe" stroke-width="1.5"/>
+                  <rect x="170" y="50" width="14" height="100" fill="#3b0764" stroke="#ec4899" stroke-width="1"/>
+                  <!-- Resonance acoustic waves in cyan/magenta -->
+                  <circle cx="133" cy="75" r="28" fill="none" stroke="#00f2fe" stroke-width="1.2" opacity="0.65" stroke-dasharray="4,2"/>
+                  <circle cx="133" cy="75" r="48" fill="none" stroke="#f472b6" stroke-width="1" opacity="0.45"/>
+                  <text x="12" y="168" fill="#f472b6" font-size="8" font-family="monospace">SCENE 03 • ಕನ್ನಡ (KANNADA)</text>
+                  <text x="250" y="168" fill="#00f2fe" font-size="8" font-family="monospace">SEED: 7332</text>
+                </svg>
+                <span class="absolute top-2 left-2 text-[9px] font-mono px-1.5 py-0.5 rounded bg-pink-950/80 border border-pink-500/40 text-pink-300">KN • Scene #3</span>
+              </div>
+              <div class="p-2.5">
+                <p class="text-[11px] text-slate-300 font-medium line-clamp-2">ಹಂಪಿಯ ವಿಜಯ ವಿಠ್ಠಲ ದೇವಾಲಯದ ಸಪ್ತಸ್ವರ ಸ್ತಂಭಗಳಿಂದ ನೀಲಿ ತರಂಗಗಳು ಹೊರಹೊಮ್ಮಿದವು.</p>
+                <div class="mt-1 flex items-center justify-between text-[9px] text-slate-400 font-mono">
+                  <span>q₁:+0.61 q₃:+0.42</span>
+                  <span class="text-pink-400 font-bold">Kannada Script</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1291,7 +1599,17 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
 
 অরণ্যের গভীরে একটি প্রাচীন ধ্বংসাবশেষের স্তম্ভ থেকে রহস্যময় নীলাভ দ্যুতি বিচ্ছুরিত হচ্ছিল। বিজ্ঞানী অম্লান তার কোয়ান্টাম সেন্সরটি প্রস্তুত করলেন।
 
-হঠাৎ চারপাশের জলস্তর আলোকিত হয়ে উঠল, এবং প্রাচীন স্তম্ভের শীর্ষে একটি শূন্যমার্গের আলোকদ্বার উন্মোচিত হলো।`
+হঠাৎ চারপাশের জলস্তর আলোকিত হয়ে উঠল, এবং প্রাচীন স্তম্ভের শীর্ষে একটি শূন্যমার্গের আলোকদ্বার উন্মোচিত হলো।`,
+      kn: `ಹಂಪಿಯ ಶಿಲ್ಪಕಲೆಯ ನಡುವೆ ಸೂರ್ಯಾಸ್ತದ ಕಿರಣಗಳು ತುಂಗಭದ್ರಾ ನದಿಯ ಅಲೆಗಳ ಮೇಲೆ ಚಿನ್ನದಂತೆ ಹೊಳೆಯುತ್ತಿದ್ದವು.
+
+ವಿಜಯ ವಿಠ್ಠಲ ದೇವಾಲಯದ ಸಪ್ತಸ್ವರ ಸ್ತಂಭಗಳ ಬಳಿ ನಿಂತ ಪುರಾತತ್ವಜ್ಞೆ ಅನ್ವಿತಾ ಪ್ರಾಚೀನ ಶಾಸನವನ್ನು ಪರಿಶೀಲಿಸಿದಳು. ಅಷ್ಟರಲ್ಲಿ ಸ್ತಂಭಗಳಿಂದ ಮೃದುವಾದ ತರಂಗಗಳು ಹೊರಹೊಮ್ಮಿದವು.
+
+ಕ್ಷಣಾರ್ಧದಲ್ಲಿ ದೇವಾಲಯದ ಗರ್ಭಗುಡಿಯ ಮೇಲೆ ನೀಲಿ ಬೆಳಕಿನ ವಲಯ ನಿರ್ಮಾಣವಾಗಿ, ಆಕಾಶದಲ್ಲಿ ನಕ್ಷತ್ರಗಳ ನರ್ತನ ಆರಂಭವಾಯಿತು.`,
+      ta: `தஞ்சாவூர் பெரிய கோயிலின் பிரம்மாண்ட நிழல் மாலை வெயிலில் நீண்டு விழுந்தது. ராஜகோபுரத்தின் மீது மாலைப் பறவைகள் வட்டமிட்டன.
+
+கோயில் பிரகாரத்தில் நின்றிருந்த ஆராய்ச்சியாளர் கபிலன், கையில் இருந்த குவாண்டம் வரைபடத்தை சோதித்தான். பழங்கால கல்வெட்டில் இருந்து மெல்லிய நீல ஒளிக்கதிர்கள் பாய்ந்தன.
+
+திடீரென ஆகಾಯத்தில் மின்னல் போன்ற பிரகாசம் தோன்றி, கோயில் விமானத்தை ஒரு மினுமினுக்கும் ஒளிக் கவசம் சூழ்ந்து கொண்டது.`
     };
 
     function loadSampleStory(lang = 'en') {
@@ -1615,6 +1933,77 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
       }
     }
 
+    let sceneSeedLocks = {};
+    let sceneStatuses = {}; // 'idle', 'queued', 'rendering', 'done', 'failed'
+    let draggedSceneIndex = null;
+
+    function toggleSeedLock(i) {
+      sceneSeedLocks[i] = !sceneSeedLocks[i];
+      const input = document.getElementById(`seed-input-${i}`);
+      const btn = document.getElementById(`seed-lock-btn-${i}`);
+      if (input && btn) {
+        if (sceneSeedLocks[i]) {
+          if (!input.value) {
+            input.value = Math.floor(Math.random() * 899999) + 100000;
+            sceneSeeds[i] = input.value;
+          }
+          input.setAttribute('readonly', 'true');
+          input.className = 'w-16 bg-cosmos-950 border border-amber-500/50 text-amber-300 rounded px-1 font-mono text-[10px] cursor-not-allowed';
+          btn.textContent = '🔒';
+          btn.title = 'Seed Locked (click to unlock)';
+          btn.className = 'p-0.5 rounded text-xs transition-colors text-amber-400';
+          showToast(`Scene #${i+1} seed locked to ${input.value}.`, 'info');
+        } else {
+          input.removeAttribute('readonly');
+          input.className = 'w-16 bg-cosmos-950 border border-indigo-500/20 text-cyan-300 rounded px-1 font-mono text-[10px]';
+          btn.textContent = '🔓';
+          btn.title = 'Seed Unlocked (click to lock)';
+          btn.className = 'p-0.5 rounded text-xs transition-colors text-slate-500 hover:text-slate-300';
+          showToast(`Scene #${i+1} seed unlocked.`, 'info');
+        }
+      }
+      saveToLocalStorage();
+    }
+
+    function handleSceneDragStart(e, i) {
+      draggedSceneIndex = i;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', String(i));
+      const el = document.getElementById(`scene-item-${i}`);
+      if (el) el.classList.add('opacity-50', 'border-cyan-400');
+    }
+
+    function handleSceneDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    }
+
+    function handleSceneDrop(e, targetI) {
+      e.preventDefault();
+      if (draggedSceneIndex === null || draggedSceneIndex === targetI) return;
+      const movedItem = parsedScenes.splice(draggedSceneIndex, 1)[0];
+      parsedScenes.splice(targetI, 0, movedItem);
+
+      const sVal = sceneSeeds[draggedSceneIndex];
+      const sLock = sceneSeedLocks[draggedSceneIndex];
+      delete sceneSeeds[draggedSceneIndex];
+      delete sceneSeedLocks[draggedSceneIndex];
+      if (sVal !== undefined) sceneSeeds[targetI] = sVal;
+      if (sLock !== undefined) sceneSeedLocks[targetI] = sLock;
+
+      renderScenes(parsedScenes);
+      saveToLocalStorage();
+      showToast(`Scene #${draggedSceneIndex + 1} moved to position #${targetI + 1}.`, 'info');
+      draggedSceneIndex = null;
+    }
+
+    function handleSceneDragEnd() {
+      draggedSceneIndex = null;
+      document.querySelectorAll('.storyboard-scene').forEach(el => {
+        el.classList.remove('opacity-50', 'border-cyan-400');
+      });
+    }
+
     // ── Render Scene Cards with Rich Controls ────────────────────────────────
     function renderScenes(scenes) {
       scenesList.innerHTML = '';
@@ -1622,43 +2011,76 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
         const num = i + 1;
         const short = prompt.replace(/^Cinematic story illustration, scene \d+:\s*/i, '');
         const div = document.createElement('div');
-        div.className = 'storyboard-scene rounded-xl p-3 flex flex-col gap-2 group';
+        div.className = 'storyboard-scene rounded-xl p-3 flex flex-col gap-2 group cursor-grab active:cursor-grabbing border border-indigo-500/20 hover:border-cyan-500/40 transition-colors';
         div.id = `scene-item-${i}`;
         div.setAttribute('role', 'listitem');
+        div.setAttribute('draggable', 'true');
+        div.ondragstart = (e) => handleSceneDragStart(e, i);
+        div.ondragover = (e) => handleSceneDragOver(e);
+        div.ondrop = (e) => handleSceneDrop(e, i);
+        div.ondragend = () => handleSceneDragEnd();
+
+        const st = sceneStatuses[i] || 'idle';
+        const statusBadge = {
+          idle: `<span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-800/80 text-slate-400 border border-slate-700">Ready</span>`,
+          queued: `<span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-500/40 animate-pulse">Queued</span>`,
+          rendering: `<span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-500/40 animate-pulse">Rendering…</span>`,
+          done: `<span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-500/30">Done ✓</span>`,
+          failed: `<span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-red-950/80 text-red-300 border border-red-500/30">Failed ✗</span>`,
+        }[st] || '';
+
+        const isLocked = !!sceneSeedLocks[i];
 
         div.innerHTML = `
           <div class="flex items-start justify-between gap-3">
             <div class="flex items-start gap-2.5 flex-1">
-              <span class="text-xs font-mono font-bold px-2 py-0.5 rounded-lg flex-shrink-0 bg-indigo-500/20 text-cyan-300 border border-indigo-500/30">
-                #${num}
+              <span class="text-xs font-mono font-bold px-2 py-0.5 rounded-lg flex-shrink-0 bg-indigo-500/20 text-cyan-300 border border-indigo-500/30 flex items-center gap-1">
+                <span class="text-[10px] text-slate-400" aria-hidden="true">⋮⋮</span> #${num}
               </span>
               <p class="text-xs text-slate-200 leading-relaxed font-medium" id="scene-text-${i}">${escapeHtml(short)}</p>
             </div>
             <div class="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
               <button onclick="moveScene(${i}, -1)" title="Move Scene Up" ${i === 0 ? 'disabled' : ''}
+                      aria-label="Move Scene #${num} Up"
                       class="btn-subtle p-1 rounded text-slate-400 hover:text-cyan-300 disabled:opacity-20">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5"/></svg>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5"/></svg>
               </button>
               <button onclick="moveScene(${i}, 1)" title="Move Scene Down" ${i === scenes.length - 1 ? 'disabled' : ''}
+                      aria-label="Move Scene #${num} Down"
                       class="btn-subtle p-1 rounded text-slate-400 hover:text-cyan-300 disabled:opacity-20">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/></svg>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/></svg>
               </button>
               <button onclick="openEditSceneModal(${i})" title="Edit Prompt"
+                      aria-label="Edit Scene #${num} Prompt"
                       class="btn-subtle p-1 rounded text-slate-400 hover:text-cyan-300">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125"/></svg>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125"/></svg>
               </button>
               <button onclick="deleteScene(${i})" title="Delete Scene"
+                      aria-label="Delete Scene #${num}"
                       class="btn-subtle p-1 rounded text-slate-400 hover:text-red-400">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
               </button>
             </div>
           </div>
-          <div class="flex items-center justify-between pt-1 border-t border-white/[0.04] text-[10px] text-slate-400">
-            <span class="font-mono">Seed: <input type="number" id="seed-input-${i}" placeholder="Auto" value="${sceneSeeds[i] || ''}" onchange="sceneSeeds[${i}]=this.value" class="w-16 bg-cosmos-950 border border-indigo-500/20 rounded px-1 text-cyan-300 font-mono text-[10px]" /></span>
+          <div class="flex items-center justify-between pt-1 border-t border-white/[0.04] text-[10px] text-slate-400 flex-wrap gap-2">
+            <div class="flex items-center gap-1.5">
+              <span id="scene-status-badge-${i}">${statusBadge}</span>
+              <span class="font-mono text-slate-400">Seed:</span>
+              <input type="number" id="seed-input-${i}" placeholder="Auto" value="${sceneSeeds[i] || ''}"
+                     ${isLocked ? 'readonly' : ''}
+                     onchange="sceneSeeds[${i}]=this.value; saveToLocalStorage();"
+                     class="w-16 bg-cosmos-950 border ${isLocked ? 'border-amber-500/50 text-amber-300 cursor-not-allowed' : 'border-indigo-500/20 text-cyan-300'} rounded px-1 font-mono text-[10px]" />
+              <button type="button" onclick="toggleSeedLock(${i})" id="seed-lock-btn-${i}"
+                      title="${isLocked ? 'Seed Locked (click to unlock)' : 'Lock Seed'}"
+                      class="p-0.5 rounded text-xs transition-colors ${isLocked ? 'text-amber-400' : 'text-slate-500 hover:text-slate-300'}">
+                ${isLocked ? '🔒' : '🔓'}
+              </button>
+            </div>
             <button onclick="generateSingleScene(${num}, '${escapeHtml(prompt)}')"
+                    aria-label="Render Single Frame #${num}"
                     class="text-cyan-400 hover:text-cyan-200 font-mono font-semibold flex items-center gap-1">
               <span>Render Single Frame</span>
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg>
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg>
             </button>
           </div>`;
         scenesList.appendChild(div);
@@ -1684,6 +2106,9 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
     function deleteScene(index) {
       if (confirm('Delete this scene from storyboard?')) {
         parsedScenes.splice(index, 1);
+        delete sceneSeeds[index];
+        delete sceneSeedLocks[index];
+        delete sceneStatuses[index];
         renderScenes(parsedScenes);
         saveToLocalStorage();
         showToast('Scene removed.', 'info');
@@ -1751,6 +2176,12 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
       galleryGrid.classList.remove('hidden');
 
       const total = parsedScenes.length;
+      for (let sIdx = 0; sIdx < total; sIdx++) {
+        sceneStatuses[sIdx] = 'queued';
+      }
+      renderScenes(parsedScenes);
+
+      const frameDurations = [];
       genStartTime = Date.now();
       if (genTimerInterval) clearInterval(genTimerInterval);
       genTimerInterval = setInterval(updateTimerDisplay, 1000);
@@ -1766,6 +2197,10 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
         const sceneId = i + 1;
         const prompt = parsedScenes[i];
         const seedVal = sceneSeeds[i] ? parseInt(sceneSeeds[i]) : null;
+
+        sceneStatuses[i] = 'rendering';
+        renderScenes(parsedScenes);
+        const frameStartTime = Date.now();
 
         statusSceneText.textContent = `Synthesizing Scene ${sceneId} of ${total}`;
         statusSubtext.textContent = isMock 
@@ -1805,12 +2240,31 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
           addImageCard(sceneId, data.image_url, prompt, selectedModel, data.quantum_diagnostics);
           quantumCanvasController.burst();
 
+          frameDurations.push(Date.now() - frameStartTime);
+          const avgDuration = frameDurations.reduce((a,b)=>a+b, 0) / frameDurations.length;
+          const remaining = total - sceneId;
+          const etaSec = Math.round((remaining * avgDuration) / 1000);
+          const etaEl = document.getElementById('eta-display');
+          if (etaEl) {
+            etaEl.textContent = remaining > 0 ? `ETA: ~${etaSec}s` : 'All frames complete';
+          }
+
+          sceneStatuses[i] = 'done';
+          renderScenes(parsedScenes);
+
           const finalPct = Math.round((sceneId / total) * 100);
           progressFill.style.width = `${finalPct}%`;
           progressContainer.setAttribute('aria-valuenow', finalPct);
           progressFrac.textContent = `${sceneId} / ${total}`;
           galleryCount.textContent = `${sceneId} frame${sceneId !== 1 ? 's' : ''} ready`;
-          btnExportZip.disabled = false;
+          
+          const btnDownload = document.getElementById('btn-download-master');
+          if (btnDownload) {
+            btnDownload.disabled = false;
+            btnDownload.removeAttribute('aria-disabled');
+            btnDownload.title = 'Download Master Storyboard Package';
+          }
+
           showToast(`Scene ${sceneId} rendered successfully!`, 'success');
           saveToLocalStorage();
 
@@ -1821,6 +2275,8 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
           }
           console.error(`Scene ${sceneId} error:`, err);
           showToast(`Scene ${sceneId} error: ${err.message}`, 'error');
+          sceneStatuses[i] = 'failed';
+          renderScenes(parsedScenes);
           addErrorCard(sceneId, prompt, selectedModel, err.message);
           // Does NOT abort the whole batch - continues to next frame!
         } finally {
@@ -1854,6 +2310,10 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
         selectedModel = 'mock';
       }
 
+      const sceneIndex = sceneId - 1;
+      sceneStatuses[sceneIndex] = 'rendering';
+      renderScenes(parsedScenes);
+
       showToast(`Rendering Scene #${sceneId}...`, 'info');
       const frameAbortCtrl = new AbortController();
       activeFrameAbortController = frameAbortCtrl;
@@ -1867,7 +2327,7 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
               scene_prompt: prompt,
               scene_id: sceneId,
               model: selectedModel,
-              seed: sceneSeeds[sceneId - 1] ? parseInt(sceneSeeds[sceneId - 1]) : null
+              seed: sceneSeeds[sceneIndex] ? parseInt(sceneSeeds[sceneIndex]) : null
             }),
             signal: frameAbortCtrl.signal
           },
@@ -1877,11 +2337,22 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
 
         addImageCard(sceneId, data.image_url, prompt, selectedModel, data.quantum_diagnostics);
         quantumCanvasController.burst();
-        btnExportZip.disabled = false;
+        sceneStatuses[sceneIndex] = 'done';
+        renderScenes(parsedScenes);
+
+        const btnDownload = document.getElementById('btn-download-master');
+        if (btnDownload) {
+          btnDownload.disabled = false;
+          btnDownload.removeAttribute('aria-disabled');
+          btnDownload.title = 'Download Master Storyboard Package';
+        }
+
         showToast(`Scene #${sceneId} generated!`, 'success');
         saveToLocalStorage();
       } catch (err) {
-        showToast(`Error rendering scene ${sceneId}: ${err.message}`, 'error');
+        sceneStatuses[sceneIndex] = 'failed';
+        renderScenes(parsedScenes);
+        showToast(`Scene #${sceneId} failed: ${err.message}`, 'error');
         addErrorCard(sceneId, prompt, selectedModel, err.message);
       } finally {
         activeFrameAbortController = null;
@@ -2035,7 +2506,35 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
       galleryGrid.appendChild(card);
     }
 
-    // ── Export Full Storyboard ZIP Package ───────────────────────────────────
+    // ── FX Preset Explanations ───────────────────────────────────────────────
+    const FX_DESCRIPTIONS = {
+      'pixels-organic': 'Voronoi bio-matrix dissolve revealing quantum coherence.',
+      'pixels-mechanic': 'Voxel glitch grid scanning digital quantum circuits.',
+      'sweep-gradient': 'High-intensity spectral laser wipe crossing the canvas.'
+    };
+
+    function updateFxDescription(presetKey) {
+      const explainer = document.getElementById('fx-explainer-text');
+      if (explainer) {
+        explainer.textContent = FX_DESCRIPTIONS[presetKey] || FX_DESCRIPTIONS['pixels-organic'];
+      }
+      saveToLocalStorage();
+    }
+
+    // ── Download Master Export System ────────────────────────────────────────
+    function toggleDownloadMasterMenu() {
+      const menu = document.getElementById('download-master-menu');
+      if (menu) menu.classList.toggle('hidden');
+    }
+
+    document.addEventListener('click', (e) => {
+      const container = document.getElementById('download-master-container');
+      const menu = document.getElementById('download-master-menu');
+      if (container && menu && !container.contains(e.target)) {
+        menu.classList.add('hidden');
+      }
+    });
+
     async function exportStoryboardZip() {
       if (typeof JSZip === 'undefined') {
         showToast('ZIP library loading...', 'info');
@@ -2044,24 +2543,22 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
       const zip = new JSZip();
       const frames = renderedGalleryFrames.filter(Boolean);
       if (frames.length === 0) {
-        showToast('No rendered frames to export.', 'warning');
+        showToast('No rendered frames to export. Render at least one scene.', 'warning');
         return;
       }
 
       showToast('Compiling Storyboard ZIP package...', 'info');
       const imgFolder = zip.folder('scene_frames');
 
-      // Add each frame PNG
       for (const f of frames) {
-        if (f.imageUrl.startsWith('data:image/png;base64,')) {
+        if (f.imageUrl && f.imageUrl.startsWith('data:image/png;base64,')) {
           const b64 = f.imageUrl.replace(/^data:image\/png;base64,/, '');
           imgFolder.file(`scene_${String(f.sceneId).padStart(2, '0')}.png`, b64, { base64: true });
         }
       }
 
-      // Add metadata JSON
       const metadata = {
-        project: "MUSIA Quantum Studio Storyboard Export",
+        project: "MUSIA Quantum Studio Storyboard Master Export",
         timestamp: new Date().toISOString(),
         prose_script: storyInput.value,
         total_scenes: frames.length,
@@ -2080,7 +2577,57 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
       a.download = `MUSIA_Storyboard_Master_${Date.now()}.zip`;
       a.click();
       URL.revokeObjectURL(a.href);
-      showToast('Storyboard ZIP downloaded successfully!', 'success');
+      showToast('Storyboard ZIP package exported successfully!', 'success');
+      const menu = document.getElementById('download-master-menu');
+      if (menu) menu.classList.add('hidden');
+    }
+
+    function exportStoryboardJson() {
+      const frames = renderedGalleryFrames.filter(Boolean);
+      if (frames.length === 0 && parsedScenes.length === 0) {
+        showToast('No storyboard scenes to export.', 'warning');
+        return;
+      }
+      const metadata = {
+        project: "MUSIA Quantum Studio Storyboard Data Export",
+        version: "3.0.0",
+        timestamp: new Date().toISOString(),
+        prose_script: storyInput.value,
+        total_scenes: parsedScenes.length,
+        scenes: parsedScenes.map((prompt, i) => {
+          const frame = frames.find(f => f && f.sceneId === (i + 1));
+          return {
+            scene_id: i + 1,
+            prompt: prompt,
+            seed: sceneSeeds[i] ? parseInt(sceneSeeds[i]) : null,
+            seed_locked: !!sceneSeedLocks[i],
+            rendered: !!frame,
+            model: frame ? frame.model : null,
+            quantum_diagnostics: frame ? frame.quantumDiag : null,
+          };
+        })
+      };
+
+      const blob = new Blob([JSON.stringify(metadata, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `MUSIA_Storyboard_Scenes_${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      showToast('Storyboard JSON metadata exported!', 'success');
+      const menu = document.getElementById('download-master-menu');
+      if (menu) menu.classList.add('hidden');
+    }
+
+    function printStoryboard() {
+      const frames = renderedGalleryFrames.filter(Boolean);
+      if (frames.length === 0) {
+        showToast('No rendered frames available to print. Render at least one scene.', 'warning');
+        return;
+      }
+      const menu = document.getElementById('download-master-menu');
+      if (menu) menu.classList.add('hidden');
+      window.print();
     }
 
     // ── Filmstrip Toggle ─────────────────────────────────────────────────────
@@ -2099,46 +2646,120 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
     }
 
     // ── Quantum vs Standard Comparison Modal ─────────────────────────────────
-    async function openComparisonModal(sceneId, promptText) {
+    let currentComparisonScene = null;
+    let compareViewMode = 'side'; // 'side' or 'slider'
+
+    function setCompareViewMode(mode) {
+      compareViewMode = mode;
+      const sideContainer = document.getElementById('compare-side-container');
+      const sliderContainer = document.getElementById('compare-slider-container');
+      const btnSide = document.getElementById('btn-compare-view-split');
+      const btnSlider = document.getElementById('btn-compare-view-slider');
+
+      if (mode === 'slider') {
+        if (sideContainer) sideContainer.classList.add('hidden');
+        if (sliderContainer) {
+          sliderContainer.classList.remove('hidden');
+          sliderContainer.classList.add('flex');
+        }
+        if (btnSide) {
+          btnSide.className = 'px-2.5 py-1 rounded-md text-[11px] font-mono font-medium transition-colors text-slate-400 hover:text-slate-200';
+          btnSide.setAttribute('aria-selected', 'false');
+        }
+        if (btnSlider) {
+          btnSlider.className = 'px-2.5 py-1 rounded-md text-[11px] font-mono font-medium transition-colors bg-cyan-500/20 text-cyan-300';
+          btnSlider.setAttribute('aria-selected', 'true');
+        }
+      } else {
+        if (sideContainer) sideContainer.classList.remove('hidden');
+        if (sliderContainer) {
+          sliderContainer.classList.add('hidden');
+          sliderContainer.classList.remove('flex');
+        }
+        if (btnSide) {
+          btnSide.className = 'px-2.5 py-1 rounded-md text-[11px] font-mono font-medium transition-colors bg-cyan-500/20 text-cyan-300';
+          btnSide.setAttribute('aria-selected', 'true');
+        }
+        if (btnSlider) {
+          btnSlider.className = 'px-2.5 py-1 rounded-md text-[11px] font-mono font-medium transition-colors text-slate-400 hover:text-slate-200';
+          btnSlider.setAttribute('aria-selected', 'false');
+        }
+      }
+    }
+
+    function updateCompareSplitSlider(val) {
+      const clip = document.getElementById('compare-slider-clip');
+      const divider = document.getElementById('compare-slider-divider');
+      if (clip) clip.style.clipPath = `polygon(0 0, ${val}% 0, ${val}% 100%, 0 100%)`;
+      if (divider) divider.style.left = `${val}%`;
+    }
+
+    async function retriggerComparison() {
+      if (currentComparisonScene) {
+        const seedInput = document.getElementById('compare-seed-input');
+        const seedVal = seedInput && seedInput.value ? parseInt(seedInput.value) : null;
+        await openComparisonModal(currentComparisonScene.sceneId, currentComparisonScene.promptText, seedVal);
+      }
+    }
+
+    async function openComparisonModal(sceneId, promptText, customSeed = null) {
+      currentComparisonScene = { sceneId, promptText };
       const modal = document.getElementById('compare-modal');
       const promptEl = document.getElementById('compare-prompt-display');
-      const qHost = document.getElementById('compare-quantum-host');
-      const sHost = document.getElementById('compare-standard-host');
+      const qHostSide = document.getElementById('compare-quantum-host');
+      const sHostSide = document.getElementById('compare-standard-host');
+      const qHostSlider = document.getElementById('compare-slider-quantum-host');
+      const sHostSlider = document.getElementById('compare-slider-standard-host');
+      const seedInput = document.getElementById('compare-seed-input');
+
+      // Determine seed
+      const activeSeed = customSeed !== null ? customSeed : (sceneSeeds[sceneId - 1] ? parseInt(sceneSeeds[sceneId - 1]) : Math.floor(Math.random() * 899999) + 100000);
+      if (seedInput) seedInput.value = activeSeed;
 
       promptEl.textContent = promptText;
-      qHost.innerHTML = '<div class="quantum-loader scale-75"><div class="quantum-loader-ring"></div><div class="quantum-loader-ring"></div></div>';
-      sHost.innerHTML = '<div class="quantum-loader scale-75"><div class="quantum-loader-ring"></div><div class="quantum-loader-ring"></div></div>';
+      const loaderHtml = '<div class="quantum-loader scale-75"><div class="quantum-loader-ring"></div><div class="quantum-loader-ring"></div></div>';
+      qHostSide.innerHTML = loaderHtml;
+      sHostSide.innerHTML = loaderHtml;
+      if (qHostSlider) qHostSlider.innerHTML = loaderHtml;
+      if (sHostSlider) sHostSlider.innerHTML = loaderHtml;
+
       modal.classList.remove('hidden');
 
       try {
-        const res = await fetch(`${API_BASE}/api/compare-scene`, {
+        const res = await safeFetchJson(`${API_BASE}/api/compare-scene`, {
           method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'ngrok-skip-browser-warning': 'true'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             scene_prompt: promptText,
-            scene_id: sceneId
-          })
+            scene_id: sceneId,
+            seed: activeSeed
+          }),
+          timeoutMs: 90000
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || 'Comparison failed');
 
-        qHost.innerHTML = `<img src="${data.quantum.image_url}" alt="Quantum Frame" class="w-full h-full object-cover rounded-lg" />`;
-        sHost.innerHTML = `<img src="${data.standard.image_url}" alt="Standard Frame" class="w-full h-full object-cover rounded-lg" />`;
+        const qImg = `<img src="${res.quantum.image_url}" alt="Quantum SDXL Frame (Seed #${activeSeed})" class="w-full h-full object-cover rounded-lg" />`;
+        const sImg = `<img src="${res.standard.image_url}" alt="Standard SDXL Frame (Seed #${activeSeed})" class="w-full h-full object-cover rounded-lg" />`;
 
-        // Update PennyLane Pauli-Z vector values
-        const qVals = data.quantum.diagnostics.qubit_expectations || [0.35, -0.42, 0.71, -0.19];
+        qHostSide.innerHTML = qImg;
+        sHostSide.innerHTML = sImg;
+        if (qHostSlider) qHostSlider.innerHTML = qImg;
+        if (sHostSlider) sHostSlider.innerHTML = sImg;
+
+        // Update PennyLane Pauli-Z vector HUD
+        const qVals = res.quantum.diagnostics.qubit_expectations || [0.35, -0.42, 0.71, -0.19];
         document.getElementById('qubit-0-val').textContent = (qVals[0] >= 0 ? '+' : '') + Number(qVals[0]).toFixed(2);
         document.getElementById('qubit-1-val').textContent = (qVals[1] >= 0 ? '+' : '') + Number(qVals[1]).toFixed(2);
         document.getElementById('qubit-2-val').textContent = (qVals[2] >= 0 ? '+' : '') + Number(qVals[2]).toFixed(2);
         document.getElementById('qubit-3-val').textContent = (qVals[3] >= 0 ? '+' : '') + Number(qVals[3]).toFixed(2);
-        document.getElementById('quantum-scale-val').textContent = `Scale: ${data.quantum.diagnostics.quantum_scale || 1.0}`;
+        document.getElementById('quantum-scale-val').textContent = `Scale: ${res.quantum.diagnostics.quantum_scale || 1.0}`;
 
       } catch (err) {
-        qHost.innerHTML = `<p class="text-xs text-red-400 p-4">Error: ${err.message}</p>`;
-        sHost.innerHTML = `<p class="text-xs text-red-400 p-4">Error: ${err.message}</p>`;
+        const errHtml = `<p class="text-xs text-red-400 p-4 font-mono text-center">Comparison Error: ${escapeHtml(err.message)}</p>`;
+        qHostSide.innerHTML = errHtml;
+        sHostSide.innerHTML = errHtml;
+        if (qHostSlider) qHostSlider.innerHTML = errHtml;
+        if (sHostSlider) sHostSlider.innerHTML = errHtml;
+        showToast(`Comparison failed: ${err.message}`, 'error');
       }
     }
 
@@ -2457,74 +3078,242 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
       return {
         destroy: () => {
           if (animFrameId) cancelAnimationFrame(animFrameId);
-          if (renderer) renderer.dispose();
-          if (canvas.parentElement) canvas.remove();
+          if (material) {
+            if (material.uniforms?.u_image?.value) {
+              try { material.uniforms.u_image.value.dispose(); } catch (_) {}
+            }
+            try { material.dispose(); } catch (_) {}
+          }
+          if (renderer) {
+            try {
+              renderer.dispose();
+              renderer.forceContextLoss();
+            } catch (_) {}
+          }
+          if (canvas && canvas.parentElement) canvas.remove();
         }
       };
     }
 
-    // ── LocalStorage Persistence ─────────────────────────────────────────────
-    function saveToLocalStorage() {
+    // ── IndexedDB Studio Session Persistence ─────────────────────────────────
+    const IDB_NAME = 'musia_studio_db';
+    const IDB_VERSION = 1;
+    const IDB_STORE = 'session_store';
+
+    function openIdb() {
+      return new Promise((resolve, reject) => {
+        if (!('indexedDB' in window)) return reject(new Error('IndexedDB not supported'));
+        const req = indexedDB.open(IDB_NAME, IDB_VERSION);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(IDB_STORE)) {
+            db.createObjectStore(IDB_STORE);
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function idbSet(key, val) {
+      try {
+        const db = await openIdb();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(IDB_STORE, 'readwrite');
+          const store = tx.objectStore(IDB_STORE);
+          const req = store.put(val, key);
+          req.onsuccess = () => resolve(true);
+          req.onerror = () => reject(req.error);
+        });
+      } catch (_) {
+        return false;
+      }
+    }
+
+    async function idbGet(key) {
+      try {
+        const db = await openIdb();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(IDB_STORE, 'readonly');
+          const store = tx.objectStore(IDB_STORE);
+          const req = store.get(key);
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+      } catch (_) {
+        return null;
+      }
+    }
+
+    async function idbClear() {
+      try {
+        const db = await openIdb();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(IDB_STORE, 'readwrite');
+          const store = tx.objectStore(IDB_STORE);
+          const req = store.clear();
+          req.onsuccess = () => resolve(true);
+          req.onerror = () => reject(req.error);
+        });
+      } catch (_) {
+        return false;
+      }
+    }
+
+    async function saveToLocalStorage() {
+      // 1. Synchronously save lightweight metadata to localStorage
       try {
         localStorage.setItem('musia_story_input', storyInput.value);
         localStorage.setItem('musia_parsed_scenes', JSON.stringify(parsedScenes));
-        localStorage.setItem('musia_rendered_frames', JSON.stringify(renderedGalleryFrames));
+        localStorage.setItem('musia_scene_seeds', JSON.stringify(sceneSeeds));
+        localStorage.setItem('musia_scene_seed_locks', JSON.stringify(sceneSeedLocks));
+        localStorage.setItem('musia_selected_model', modelSelect.value);
+        localStorage.setItem('musia_selected_fx', document.getElementById('fx-preset-select')?.value || 'pixels-organic');
+        localStorage.setItem('musia_selected_language', document.getElementById('language-select')?.value || 'auto');
+      } catch (_) {}
+
+      // 2. Asynchronously save all heavyweight session data (including base64 PNGs) to IndexedDB
+      try {
+        await idbSet('musia_story_input', storyInput.value);
+        await idbSet('musia_parsed_scenes', parsedScenes);
+        await idbSet('musia_scene_seeds', sceneSeeds);
+        await idbSet('musia_scene_seed_locks', sceneSeedLocks);
+        await idbSet('musia_rendered_frames', renderedGalleryFrames);
       } catch (_) {}
     }
 
-    function restoreFromLocalStorage() {
+    async function restoreFromLocalStorage() {
       try {
-        const savedStory = localStorage.getItem('musia_story_input');
-        const savedScenes = localStorage.getItem('musia_parsed_scenes');
-        const savedFrames = localStorage.getItem('musia_rendered_frames');
+        // Try IndexedDB first for heavy image caches
+        let savedStory = await idbGet('musia_story_input');
+        let savedScenes = await idbGet('musia_parsed_scenes');
+        let savedSeeds = await idbGet('musia_scene_seeds');
+        let savedLocks = await idbGet('musia_scene_seed_locks');
+        let savedFrames = await idbGet('musia_rendered_frames');
+
+        // Fallback to localStorage if IDB has not yet been populated
+        if (!savedStory) savedStory = localStorage.getItem('musia_story_input');
+        if (!savedScenes) {
+          const scStr = localStorage.getItem('musia_parsed_scenes');
+          if (scStr) try { savedScenes = JSON.parse(scStr); } catch (_) {}
+        }
+        if (!savedSeeds) {
+          const sStr = localStorage.getItem('musia_scene_seeds');
+          if (sStr) try { savedSeeds = JSON.parse(sStr); } catch (_) {}
+        }
+        if (!savedLocks) {
+          const lStr = localStorage.getItem('musia_scene_seed_locks');
+          if (lStr) try { savedLocks = JSON.parse(lStr); } catch (_) {}
+        }
+        if (!savedFrames) {
+          const fStr = localStorage.getItem('musia_rendered_frames');
+          if (fStr) try { savedFrames = JSON.parse(fStr); } catch (_) {}
+        }
+
+        const savedModel = localStorage.getItem('musia_selected_model');
+        if (savedModel && modelSelect.querySelector(`option[value="${savedModel}"]`)) {
+          modelSelect.value = savedModel;
+          onModelModeChange(savedModel);
+        }
+
+        const savedFx = localStorage.getItem('musia_selected_fx');
+        if (savedFx && document.getElementById('fx-preset-select')) {
+          document.getElementById('fx-preset-select').value = savedFx;
+          updateFxDescription(savedFx);
+        }
+
+        const savedLang = localStorage.getItem('musia_selected_language');
+        if (savedLang && document.getElementById('language-select')) {
+          document.getElementById('language-select').value = savedLang;
+          onLanguageModeChange(savedLang);
+        }
 
         if (savedStory) {
           storyInput.value = savedStory;
           storyInput.dispatchEvent(new Event('input'));
         }
 
-        if (savedScenes) {
-          const sc = JSON.parse(savedScenes);
-          if (Array.isArray(sc) && sc.length > 0) {
-            parsedScenes = sc;
-            renderScenes(parsedScenes);
-            btnStart.disabled = false;
-            progressFrac.textContent = `0 / ${parsedScenes.length}`;
-            statusText.textContent = `Restored ${parsedScenes.length} scenes from previous session.`;
-          }
+        if (savedSeeds && typeof savedSeeds === 'object') {
+          sceneSeeds = savedSeeds;
+        }
+        if (savedLocks && typeof savedLocks === 'object') {
+          sceneSeedLocks = savedLocks;
         }
 
-        if (savedFrames) {
-          const rf = JSON.parse(savedFrames);
-          if (Array.isArray(rf) && rf.length > 0) {
-            rf.filter(Boolean).forEach(f => {
+        if (Array.isArray(savedScenes) && savedScenes.length > 0) {
+          parsedScenes = savedScenes;
+          renderScenes(parsedScenes);
+          btnStart.disabled = false;
+          progressFrac.textContent = `0 / ${parsedScenes.length}`;
+          statusText.textContent = `Restored ${parsedScenes.length} scenes from previous session.`;
+        }
+
+        if (Array.isArray(savedFrames) && savedFrames.length > 0) {
+          const validFrames = savedFrames.filter(Boolean);
+          renderedGalleryFrames = validFrames;
+          if (validFrames.length > 0) {
+            galleryGrid.innerHTML = '';
+            validFrames.forEach(f => {
               addImageCard(f.sceneId, f.imageUrl, f.prompt, f.model, f.quantumDiag);
             });
-            btnExportZip.disabled = false;
-            galleryCount.textContent = `${rf.filter(Boolean).length} frames ready`;
+            galleryEmpty.classList.add('hidden');
+            galleryGrid.classList.remove('hidden');
+            galleryCount.textContent = `${validFrames.length} frame${validFrames.length !== 1 ? 's' : ''} ready`;
+            const btnDownload = document.getElementById('btn-download-master');
+            if (btnDownload) {
+              btnDownload.disabled = false;
+              btnDownload.removeAttribute('aria-disabled');
+              btnDownload.title = 'Download Master Storyboard Package';
+            }
           }
         }
-      } catch (_) {}
+      } catch (err) {
+        console.warn('Session restoration error:', err);
+      }
     }
 
-    function clearStory() {
+    async function clearSavedWork() {
+      if (!confirm('Clear all story prose, parsed scenes, seed locks, and cached frame renders? This cannot be undone.')) {
+        return;
+      }
       storyInput.value = '';
       storyInput.dispatchEvent(new Event('input'));
       clearScenes();
       resetProgress();
+      sceneSeeds = {};
+      sceneSeedLocks = {};
+      sceneStatuses = {};
       btnStart.disabled = true;
-      btnExportZip.disabled = true;
+      const btnDownload = document.getElementById('btn-download-master');
+      if (btnDownload) {
+        btnDownload.disabled = true;
+        btnDownload.setAttribute('aria-disabled', 'true');
+        btnDownload.title = 'Generate at least one frame to export master storyboard';
+      }
       renderedGalleryFrames.length = 0;
       galleryGrid.innerHTML = '';
       galleryGrid.classList.add('hidden');
       galleryEmpty.classList.remove('hidden');
       galleryCount.textContent = '0 frames ready';
       langBanner.classList.add('hidden');
+
+      // Clear IndexedDB and LocalStorage
+      await idbClear();
       localStorage.removeItem('musia_story_input');
       localStorage.removeItem('musia_parsed_scenes');
+      localStorage.removeItem('musia_scene_seeds');
+      localStorage.removeItem('musia_scene_seed_locks');
       localStorage.removeItem('musia_rendered_frames');
+      localStorage.removeItem('musia_selected_model');
+      localStorage.removeItem('musia_selected_fx');
+      localStorage.removeItem('musia_selected_language');
+
       setGlobalPill('idle');
-      showToast('Project reset.', 'info');
+      showToast('All saved storyboard work and cached frames cleared.', 'info');
+    }
+
+    function clearStory() {
+      clearSavedWork();
     }
 
     function clearScenes() {
@@ -2542,6 +3331,8 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
       statusText.textContent = 'Ready — awaiting narrative parsing.';
       statusDetail.classList.add('hidden');
       timerDisplay.classList.add('hidden');
+      const etaEl = document.getElementById('eta-display');
+      if (etaEl) etaEl.textContent = 'ETA: --';
     }
 
     function escapeHtml(s) {
@@ -2551,7 +3342,7 @@ Suddenly, a brilliant flare of turquoise energy erupted from the gateway, castin
 
     // ── Initialize on Page Load ──────────────────────────────────────────────
     (async () => {
-      restoreFromLocalStorage();
+      await restoreFromLocalStorage();
       await checkSystemHealth();
     })();
   </script>

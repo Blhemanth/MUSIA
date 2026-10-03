@@ -53,6 +53,12 @@ class TestStoryParser(unittest.TestCase):
     def test_detect_language_bengali(self):
         self.assertEqual(detect_language("আজকের দিনটি অপূর্ব সুন্দর এবং শান্ত।"), "bn")
 
+    def test_detect_language_tamil(self):
+        self.assertEqual(detect_language("வணக்கம், இது ஒரு தமிழ் கதையின் முன்னோட்டம்."), "ta")
+
+    def test_detect_language_kannada(self):
+        self.assertEqual(detect_language("ನಮಸ್ಕಾರ, ಇದು ಒಂದು ಕನ್ನಡ ಕಥೆಯ ಪರೀಕ್ಷೆ."), "kn")
+
     def test_normalize_multilingual_text(self):
         raw = "Hello world\r\nthis is\ra test"
         normalized = normalize_multilingual_text(raw)
