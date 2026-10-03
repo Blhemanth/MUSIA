@@ -26,6 +26,7 @@ wheels/
 # Secrets and environment configs
 *.env
 .env.*
+!.env.example
 
 # Generated media / runtime outputs
 backend/static/generated_scenes/*.png
