@@ -32,7 +32,7 @@ Translating long-form prose and multilingual stories into cohesive visual storyb
 
 ## ⚡ Key Features
 
-- **⚛️ Quantum-Enhanced Latent Embeddings**: Custom `QuantumFeatureEnhancer` (`best_pqc_enhancer_fulldataset.pt` & `adapter_model.safetensors`) transforms prompt embeddings through quantum state vectors.
+- **⚛️ Quantum-Enhanced Latent Embeddings**: Custom `QuantumFeatureEnhancer` transforms prompt embeddings through quantum state vectors using trained PQC & LoRA adapter weights.
 - **🎬 Intelligent Scene Chunking**: Automatically segments prose into chronological scenes while filtering conversational noise and preserving descriptive atmosphere.
 - **⚡ Dual Engine Generation**:
   - **Quantum-Enhanced SDXL (Colab/Cloud GPU)**: High-resolution cinematic scene generation via an active ngrok tunnel.
@@ -164,8 +164,7 @@ Main_musia_project/
 ├── frontend/
 │   └── index.html                  # Quantum Studio single-page application
 ├── tests/                          # Automated unit & integration test suite (25 tests)
-├── best_pqc_enhancer_fulldataset.pt # Pretrained Parameterized Quantum Circuit weights
-├── adapter_model.safetensors       # LoRA / diffusion adapter weights
+├── vercel.json                     # Vercel deployment configuration
 ├── requirements.txt                # Python environment specifications
 └── README.md                       # Comprehensive documentation
 ```

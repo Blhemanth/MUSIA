@@ -37,6 +37,20 @@ backend/static/generated_scenes/*.jpg
 backend/test_s.py
 test_utf8.txt
 
+# Model weights & large binary checkpoints
+*.safetensors
+*.pt
+*.pth
+*.bin
+*.ckpt
+*.onnx
+
+# Video renders & demo captures
+*.mp4
+*.webm
+*.avi
+*.mov
+
 # IDE / OS
 .vscode/
 .idea/
